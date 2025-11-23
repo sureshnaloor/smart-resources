@@ -1,26 +1,236 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-navy: #1e293b;
+  --slate-blue: #475569;
+  --steel-gray: #64748b;
+  --resource-green: #059669;
+  --alert-amber: #d97706;
+  --critical-red: #dc2626;
+  --info-blue: #0ea5e9;
+  --light-gray: #f8fafc;
+  --medium-gray: #e2e8f0;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.liquid-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  opacity: 0.3;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.resource-card {
+  transition: all 0.3s ease;
+  cursor: grab;
+}
+
+.resource-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.resource-card:active {
+  cursor: grabbing;
+}
+
+.timeline-slot {
+  min-height: 60px;
+  border: 2px dashed var(--medium-gray);
+  transition: all 0.3s ease;
+}
+
+.timeline-slot.drag-over {
+  border-color: var(--info-blue);
+  background-color: rgba(14, 165, 233, 0.1);
+}
+
+.metric-card {
+  border-left: 4px solid var(--info-blue);
+}
+
+.metric-card.success {
+  border-left-color: var(--resource-green);
+}
+
+.metric-card.warning {
+  border-left-color: var(--alert-amber);
+}
+
+.metric-card.critical {
+  border-left-color: var(--critical-red);
+}
+
+.nav-link {
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link.active {
+  background-color: rgba(14, 165, 233, 0.2);
+  border-right: 3px solid var(--info-blue);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.status-available {
+  background-color: var(--resource-green);
+}
+
+.status-busy {
+  background-color: var(--alert-amber);
+}
+
+.status-unavailable {
+  background-color: var(--critical-red);
+}
+
+.status-maintenance {
+  background-color: var(--steel-gray);
+}
+
+.status-planning {
+  background-color: var(--steel-gray);
+}
+
+.status-active {
+  background-color: var(--resource-green);
+}
+
+.status-completed {
+  background-color: var(--info-blue);
+}
+
+.status-on-hold {
+  background-color: var(--alert-amber);
+}
+
+.skill-tag {
+  background-color: var(--light-gray);
+  color: var(--steel-gray);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin: 2px;
+  display: inline-block;
+}
+
+.allocation-chart {
+  height: 300px;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(51, 65, 85, 0.8) 100%);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.stagger-4 {
+  animation-delay: 0.4s;
+}
+
+.project-card {
+  transition: all 0.3s ease;
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.tab-button {
+  transition: all 0.2s ease;
+}
+
+.tab-button.active {
+  background-color: var(--info-blue);
+  color: white;
+}
+
+.search-input {
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.gantt-bar {
+  height: 30px;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gantt-bar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
