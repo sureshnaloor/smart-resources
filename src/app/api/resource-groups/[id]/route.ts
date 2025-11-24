@@ -5,12 +5,13 @@ import type { ResourceGroup, ApiResponse } from '@/lib/models';
 // GET /api/resource-groups/[id] - Get single resource group
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const collection = await getCollection<ResourceGroup>(Collections.RESOURCE_GROUPS);
         const resourceGroup = await collection.findOne({
-            id: params.id,
+            id,
             isDeleted: { $ne: true }
         });
 
@@ -45,9 +46,10 @@ export async function GET(
 // PUT /api/resource-groups/[id] - Update resource group
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const body = await request.json();
         const collection = await getCollection<ResourceGroup>(Collections.RESOURCE_GROUPS);
 
@@ -67,7 +69,7 @@ export async function PUT(
         delete updateData.createdAt;
 
         const result = await collection.findOneAndUpdate(
-            { id: params.id, isDeleted: { $ne: true } },
+            { id, isDeleted: { $ne: true } },
             { $set: updateData },
             { returnDocument: 'after' }
         );
@@ -104,13 +106,14 @@ export async function PUT(
 // DELETE /api/resource-groups/[id] - Delete resource group (soft delete)
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const collection = await getCollection<ResourceGroup>(Collections.RESOURCE_GROUPS);
 
         const result = await collection.findOneAndUpdate(
-            { id: params.id, isDeleted: { $ne: true } },
+            { id, isDeleted: { $ne: true } },
             {
                 $set: {
                     isDeleted: true,

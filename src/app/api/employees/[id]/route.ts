@@ -5,12 +5,13 @@ import type { Employee, ApiResponse } from '@/lib/models';
 // GET /api/employees/[id] - Get single employee
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const collection = await getCollection<Employee>(Collections.EMPLOYEES);
         const employee = await collection.findOne({
-            id: params.id,
+            id,
             isDeleted: { $ne: true }
         });
 
@@ -45,9 +46,10 @@ export async function GET(
 // PUT /api/employees/[id] - Update employee
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const body = await request.json();
         const collection = await getCollection<Employee>(Collections.EMPLOYEES);
 
@@ -62,7 +64,7 @@ export async function PUT(
         delete updateData.createdAt;
 
         const result = await collection.findOneAndUpdate(
-            { id: params.id, isDeleted: { $ne: true } },
+            { id, isDeleted: { $ne: true } },
             { $set: updateData },
             { returnDocument: 'after' }
         );
@@ -99,13 +101,14 @@ export async function PUT(
 // DELETE /api/employees/[id] - Delete employee (soft delete)
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const collection = await getCollection<Employee>(Collections.EMPLOYEES);
 
         const result = await collection.findOneAndUpdate(
-            { id: params.id, isDeleted: { $ne: true } },
+            { id, isDeleted: { $ne: true } },
             {
                 $set: {
                     isDeleted: true,

@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection } from 'mongodb';
+import { MongoClient, Db, Collection, Document } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Please add your MongoDB URI to .env.local');
@@ -34,7 +34,7 @@ export async function getDatabase(): Promise<Db> {
   return client.db('smartresources');
 }
 
-export async function getCollection<T = any>(name: string): Promise<Collection<T>> {
+export async function getCollection<T extends Document = Document>(name: string): Promise<Collection<T>> {
   const db = await getDatabase();
   return db.collection<T>(name);
 }

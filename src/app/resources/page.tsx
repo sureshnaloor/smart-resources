@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Navigation from '@/components/Navigation';
+import BusinessCenterModal from '@/components/BusinessCenterModal';
+import ResourceModal from '@/components/ResourceModal';
 import { employeesApi, equipmentApi, businessCentersApi } from '@/lib/api-client';
 import type { Employee, Equipment, BusinessCenter } from '@/lib/models';
 
@@ -13,8 +15,17 @@ export default function ResourcesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [resourceType, setResourceType] = useState<'employee' | 'equipment'>('employee');
+    const [resourceMode, setResourceMode] = useState<'add' | 'edit'>('add');
+    const [selectedResource, setSelectedResource] = useState<Employee | Equipment | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Business Center Modal State
+    const [showBusinessCenterModal, setShowBusinessCenterModal] = useState(false);
+    const [businessCenterMode, setBusinessCenterMode] = useState<'add' | 'edit'>('add');
+    const [selectedBusinessCenter, setSelectedBusinessCenter] = useState<BusinessCenter | null>(null);
+    const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; centerId: string | null }>({ show: false, centerId: null });
 
     useEffect(() => {
         fetchData();
@@ -80,6 +91,186 @@ export default function ResourcesPage() {
             (item.position && item.position.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (item.make && item.make.toLowerCase().includes(searchTerm.toLowerCase()))
         );
+    };
+
+    // Business Center CRUD Operations
+    const handleAddBusinessCenter = () => {
+        setBusinessCenterMode('add');
+        setSelectedBusinessCenter(null);
+        setShowBusinessCenterModal(true);
+    };
+
+    const handleEditBusinessCenter = (center: BusinessCenter) => {
+        setBusinessCenterMode('edit');
+        setSelectedBusinessCenter(center);
+        setShowBusinessCenterModal(true);
+    };
+
+    const handleDeleteBusinessCenter = (centerId: string) => {
+        setDeleteConfirm({ show: true, centerId });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm.centerId) return;
+
+        try {
+            const response = await businessCentersApi.delete(deleteConfirm.centerId);
+            if (response.success) {
+                setBusinessCenters(prev => prev.filter(c => c.id !== deleteConfirm.centerId));
+                showNotification('success', 'Business center deleted successfully');
+            } else {
+                showNotification('error', response.error || 'Failed to delete business center');
+            }
+        } catch (err) {
+            showNotification('error', 'Failed to delete business center');
+            console.error('Error deleting business center:', err);
+        } finally {
+            setDeleteConfirm({ show: false, centerId: null });
+        }
+    };
+
+    const handleSaveBusinessCenter = async (data: Partial<BusinessCenter>) => {
+        try {
+            if (businessCenterMode === 'add') {
+                // Generate a unique ID for new business center
+                const newCenter = {
+                    ...data,
+                    id: `bc-${Date.now()}`
+                };
+                const response = await businessCentersApi.create(newCenter);
+                if (response.success && response.data) {
+                    setBusinessCenters(prev => [...prev, response.data as BusinessCenter]);
+                    showNotification('success', 'Business center added successfully');
+                }
+            } else if (selectedBusinessCenter) {
+                const response = await businessCentersApi.update(selectedBusinessCenter.id, data);
+                if (response.success && response.data) {
+                    setBusinessCenters(prev => prev.map(c =>
+                        c.id === selectedBusinessCenter.id ? response.data as BusinessCenter : c
+                    ));
+                    showNotification('success', 'Business center updated successfully');
+                }
+            }
+            setShowBusinessCenterModal(false);
+        } catch (err) {
+            showNotification('error', 'Failed to save business center');
+            console.error('Error saving business center:', err);
+            throw err;
+        }
+    };
+
+    const showNotification = (type: 'success' | 'error', message: string) => {
+        setNotification({ type, message });
+        setTimeout(() => setNotification(null), 3000);
+    };
+
+    // Resource CRUD Operations
+    const handleAddResource = (type: 'employee' | 'equipment') => {
+        setResourceType(type);
+        setResourceMode('add');
+        setSelectedResource(null);
+        setShowModal(true);
+    };
+
+    const handleEditEmployee = (employee: Employee) => {
+        setResourceType('employee');
+        setResourceMode('edit');
+        setSelectedResource(employee);
+        setShowModal(true);
+    };
+
+    const handleEditEquipment = (equipment: Equipment) => {
+        setResourceType('equipment');
+        setResourceMode('edit');
+        setSelectedResource(equipment);
+        setShowModal(true);
+    };
+
+    const handleDeleteEmployee = async (employeeId: string) => {
+        if (!confirm('Are you sure you want to delete this employee?')) {
+            return;
+        }
+
+        try {
+            const response = await employeesApi.delete(employeeId);
+            if (response.success) {
+                setEmployees(prev => prev.filter(e => e.id !== employeeId));
+                showNotification('success', 'Employee deleted successfully');
+            } else {
+                showNotification('error', response.error || 'Failed to delete employee');
+            }
+        } catch (err) {
+            showNotification('error', 'Failed to delete employee');
+            console.error('Error deleting employee:', err);
+        }
+    };
+
+    const handleDeleteEquipment = async (equipmentId: string) => {
+        if (!confirm('Are you sure you want to delete this equipment?')) {
+            return;
+        }
+
+        try {
+            const response = await equipmentApi.delete(equipmentId);
+            if (response.success) {
+                setEquipment(prev => prev.filter(e => e.id !== equipmentId));
+                showNotification('success', 'Equipment deleted successfully');
+            } else {
+                showNotification('error', response.error || 'Failed to delete equipment');
+            }
+        } catch (err) {
+            showNotification('error', 'Failed to delete equipment');
+            console.error('Error deleting equipment:', err);
+        }
+    };
+
+    const handleSaveResource = async (data: Partial<Employee> | Partial<Equipment>) => {
+        try {
+            if (resourceType === 'employee') {
+                if (resourceMode === 'add') {
+                    const response = await employeesApi.create(data);
+                    if (response.success && response.data) {
+                        setEmployees(prev => [...prev, response.data as Employee]);
+                        showNotification('success', 'Employee added successfully');
+                    } else {
+                        throw new Error(response.error || 'Failed to add employee');
+                    }
+                } else if (selectedResource) {
+                    const response = await employeesApi.update(selectedResource.id, data);
+                    if (response.success && response.data) {
+                        setEmployees(prev => prev.map(e =>
+                            e.id === selectedResource.id ? response.data as Employee : e
+                        ));
+                        showNotification('success', 'Employee updated successfully');
+                    } else {
+                        throw new Error(response.error || 'Failed to update employee');
+                    }
+                }
+            } else {
+                if (resourceMode === 'add') {
+                    const response = await equipmentApi.create(data);
+                    if (response.success && response.data) {
+                        setEquipment(prev => [...prev, response.data as Equipment]);
+                        showNotification('success', 'Equipment added successfully');
+                    } else {
+                        throw new Error(response.error || 'Failed to add equipment');
+                    }
+                } else if (selectedResource) {
+                    const response = await equipmentApi.update(selectedResource.id, data);
+                    if (response.success && response.data) {
+                        setEquipment(prev => prev.map(e =>
+                            e.id === selectedResource.id ? response.data as Equipment : e
+                        ));
+                        showNotification('success', 'Equipment updated successfully');
+                    } else {
+                        throw new Error(response.error || 'Failed to update equipment');
+                    }
+                }
+            }
+        } catch (err: any) {
+            showNotification('error', err.message || 'Failed to save resource');
+            throw err;
+        }
     };
 
     const filteredEmployees = filterResources(employees);
@@ -217,12 +408,21 @@ export default function ResourcesPage() {
                                         </svg>
                                     </div>
 
-                                    <button
-                                        onClick={() => setShowModal(true)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                                    >
-                                        Add Resource
-                                    </button>
+                                    {currentTab === 'centers' ? (
+                                        <button
+                                            onClick={handleAddBusinessCenter}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                        >
+                                            Add Business Center
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleAddResource(currentTab === 'employees' ? 'employee' : 'equipment')}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                        >
+                                            Add Resource
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -233,18 +433,40 @@ export default function ResourcesPage() {
                                     <div className="resource-grid">
                                         {filteredEmployees.map((employee) => (
                                             <div key={employee.id} className="resource-card bg-white rounded-lg p-6 border border-gray-200">
-                                                <div className="flex items-start space-x-4">
-                                                    <div className={`w-12 h-12 ${employee.avatar.color} rounded-full flex items-center justify-center text-white font-medium`}>
-                                                        {employee.avatar.initials}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <h3 className="text-lg font-semibold text-gray-900">{employee.name}</h3>
-                                                        <p className="text-sm text-gray-600">{employee.position}</p>
-                                                        <div className="flex items-center mt-2">
-                                                            <span className={`status-indicator status-${employee.availability}`}></span>
-                                                            <span className="text-sm text-gray-600 capitalize">{employee.availability}</span>
-                                                            <span className="ml-auto text-xs text-gray-500">{employee.experience} years exp</span>
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex items-start space-x-4 flex-1">
+                                                        <div className={`w-12 h-12 ${employee.avatar.color} rounded-full flex items-center justify-center text-white font-medium`}>
+                                                            {employee.avatar.initials}
                                                         </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="text-lg font-semibold text-gray-900">{employee.name}</h3>
+                                                            <p className="text-sm text-gray-600">{employee.position}</p>
+                                                            <div className="flex items-center mt-2">
+                                                                <span className={`status-indicator status-${employee.availability}`}></span>
+                                                                <span className="text-sm text-gray-600 capitalize">{employee.availability}</span>
+                                                                <span className="ml-auto text-xs text-gray-500">{employee.experience} years exp</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex space-x-2 ml-4">
+                                                        <button
+                                                            onClick={() => handleEditEmployee(employee)}
+                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteEmployee(employee.id)}
+                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -270,20 +492,42 @@ export default function ResourcesPage() {
                                     <div className="resource-grid">
                                         {filteredEquipment.map((eq) => (
                                             <div key={eq.id} className="resource-card bg-white rounded-lg p-6 border border-gray-200">
-                                                <div className="flex items-start space-x-4">
-                                                    <div className="w-12 h-12 bg-gray-400 rounded-lg flex items-center justify-center">
-                                                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                                                        </svg>
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <h3 className="text-lg font-semibold text-gray-900">{eq.name}</h3>
-                                                        <p className="text-sm text-gray-600">{eq.make} {eq.model}</p>
-                                                        <div className="flex items-center mt-2">
-                                                            <span className={`status-indicator status-${eq.availability}`}></span>
-                                                            <span className="text-sm text-gray-600 capitalize">{eq.availability}</span>
-                                                            <span className="ml-auto text-xs text-gray-500">{eq.year}</span>
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex items-start space-x-4 flex-1">
+                                                        <div className="w-12 h-12 bg-gray-400 rounded-lg flex items-center justify-center">
+                                                            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                                                            </svg>
                                                         </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="text-lg font-semibold text-gray-900">{eq.name}</h3>
+                                                            <p className="text-sm text-gray-600">{eq.make} {eq.model}</p>
+                                                            <div className="flex items-center mt-2">
+                                                                <span className={`status-indicator status-${eq.availability}`}></span>
+                                                                <span className="text-sm text-gray-600 capitalize">{eq.availability}</span>
+                                                                <span className="ml-auto text-xs text-gray-500">{eq.year}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex space-x-2 ml-4">
+                                                        <button
+                                                            onClick={() => handleEditEquipment(eq)}
+                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteEquipment(eq.id)}
+                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -312,16 +556,38 @@ export default function ResourcesPage() {
                                     <div className="resource-grid">
                                         {filteredCenters.map((center) => (
                                             <div key={center.id} className="resource-card bg-white rounded-lg p-6 border border-gray-200">
-                                                <div className="flex items-start space-x-4">
-                                                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                        </svg>
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex items-start space-x-4 flex-1">
+                                                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="text-lg font-semibold text-gray-900">{center.name}</h3>
+                                                            <p className="text-sm text-gray-600">{center.type} Facility</p>
+                                                            <p className="text-sm text-gray-600 mt-1">Manager: {center.manager}</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <h3 className="text-lg font-semibold text-gray-900">{center.name}</h3>
-                                                        <p className="text-sm text-gray-600">{center.type} Facility</p>
-                                                        <p className="text-sm text-gray-600 mt-1">Manager: {center.manager}</p>
+                                                    <div className="flex space-x-2 ml-4">
+                                                        <button
+                                                            onClick={() => handleEditBusinessCenter(center)}
+                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteBusinessCenter(center.id)}
+                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -346,221 +612,75 @@ export default function ResourcesPage() {
                         </div>
                     </main>
 
-                    {/* Add Resource Modal */}
-                    {showModal && (
+                    {/* Resource Modal */}
+                    <ResourceModal
+                        isOpen={showModal}
+                        onClose={() => setShowModal(false)}
+                        onSave={handleSaveResource}
+                        resourceType={resourceType}
+                        mode={resourceMode}
+                        resource={selectedResource}
+                    />
+
+                    {/* Business Center Modal */}
+                    <BusinessCenterModal
+                        isOpen={showBusinessCenterModal}
+                        onClose={() => setShowBusinessCenterModal(false)}
+                        onSave={handleSaveBusinessCenter}
+                        businessCenter={selectedBusinessCenter}
+                        mode={businessCenterMode}
+                    />
+
+                    {/* Delete Confirmation Dialog */}
+                    {deleteConfirm.show && (
                         <div className="modal open">
-                            <div className="modal-content max-w-3xl">
+                            <div className="modal-content max-w-md">
                                 <div className="p-6">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-900">Add New Resource</h3>
-                                        <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
+                                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                                        <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                                        Delete Business Center
+                                    </h3>
+                                    <p className="text-sm text-gray-600 text-center mb-6">
+                                        Are you sure you want to delete this business center? This action cannot be undone.
+                                    </p>
+                                    <div className="flex space-x-3">
+                                        <button
+                                            onClick={() => setDeleteConfirm({ show: false, centerId: null })}
+                                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={confirmDelete}
+                                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                        >
+                                            Delete
                                         </button>
                                     </div>
-
-                                    <form className="space-y-6">
-                                        {/* Resource Type Selection */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Resource Type *</label>
-                                            <select
-                                                value={resourceType}
-                                                onChange={(e) => setResourceType(e.target.value as 'employee' | 'equipment')}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                                            >
-                                                <option value="employee">Employee</option>
-                                                <option value="equipment">Equipment</option>
-                                            </select>
-                                        </div>
-
-                                        {/* Employee Form */}
-                                        {resourceType === 'employee' && (
-                                            <>
-                                                {/* Basic Information */}
-                                                <div>
-                                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Position *</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="e.g., Senior Welder" required />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience *</label>
-                                                            <input type="number" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Skills & Certifications */}
-                                                <div>
-                                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Skills & Certifications</h4>
-                                                    <div className="grid grid-cols-1 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Skills *</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="e.g., TIG Welding, MIG Welding, Blueprint Reading (comma separated)" required />
-                                                            <p className="text-xs text-gray-500 mt-1">Enter skills separated by commas</p>
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Certifications</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="e.g., AWS D1.1, OSHA 30 (comma separated)" />
-                                                            <p className="text-xs text-gray-500 mt-1">Enter certifications separated by commas</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Compensation & Cost */}
-                                                <div>
-                                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Compensation & Cost</h4>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Annual Salary/Wage *</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
-                                                                <input type="number" min="0" step="0.01" className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0.00" required />
-                                                            </div>
-                                                            <p className="text-xs text-gray-500 mt-1">Annual salary or hourly wage</p>
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Cost Per Hour *</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
-                                                                <input type="number" min="0" step="0.01" className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0.00" required />
-                                                            </div>
-                                                            <p className="text-xs text-gray-500 mt-1">Actual cost per hour to company (includes benefits, overhead)</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Availability */}
-                                                <div>
-                                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Availability</h4>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Current Status *</label>
-                                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-                                                                <option value="available">Available</option>
-                                                                <option value="busy">Busy</option>
-                                                                <option value="unavailable">Unavailable</option>
-                                                            </select>
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Is Indirect Resource?</label>
-                                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-                                                                <option value="false">No (Direct Labor)</option>
-                                                                <option value="true">Yes (Supervisory/Management)</option>
-                                                            </select>
-                                                            <p className="text-xs text-gray-500 mt-1">Indirect resources are supervisory or management staff</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {/* Equipment Form */}
-                                        {resourceType === 'equipment' && (
-                                            <>
-                                                {/* Basic Information */}
-                                                <div>
-                                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Equipment Name *</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="e.g., Excavator #1" required />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Make *</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="e.g., Caterpillar" required />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Model *</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="e.g., 320D" required />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Year *</label>
-                                                            <input type="number" min="1900" max="2100" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="2020" required />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                                                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Cost Information */}
-                                                <div>
-                                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Cost Information</h4>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Acquisition Cost *</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
-                                                                <input type="number" min="0" step="0.01" className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0.00" required />
-                                                            </div>
-                                                            <p className="text-xs text-gray-500 mt-1">Purchase or current value of equipment</p>
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Cost Per Hour *</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
-                                                                <input type="number" min="0" step="0.01" className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0.00" required />
-                                                            </div>
-                                                            <p className="text-xs text-gray-500 mt-1">Operating cost per hour (fuel, maintenance, depreciation)</p>
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Depreciation Rate (%)</label>
-                                                            <div className="relative">
-                                                                <input type="number" min="0" max="100" step="0.1" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="10" />
-                                                                <span className="absolute right-3 top-2.5 text-gray-500">%</span>
-                                                            </div>
-                                                            <p className="text-xs text-gray-500 mt-1">Annual depreciation percentage</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Maintenance & Availability */}
-                                                <div>
-                                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Maintenance & Availability</h4>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Last Maintenance Date</label>
-                                                            <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Next Maintenance Date</label>
-                                                            <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Current Status *</label>
-                                                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-                                                                <option value="available">Available</option>
-                                                                <option value="busy">In Use</option>
-                                                                <option value="maintenance">Under Maintenance</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        <div className="flex justify-end space-x-3 pt-4 border-t">
-                                            <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                                                Cancel
-                                            </button>
-                                            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                                Add {resourceType === 'employee' ? 'Employee' : 'Equipment'}
-                                            </button>
-                                        </div>
-                                    </form>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Notification Toast */}
+                    {notification && (
+                        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+                            } text-white animate-fade-in`}>
+                            <div className="flex items-center space-x-2">
+                                {notification.type === 'success' ? (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                )}
+                                <span>{notification.message}</span>
                             </div>
                         </div>
                     )}

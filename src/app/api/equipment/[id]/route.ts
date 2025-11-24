@@ -5,12 +5,13 @@ import type { Equipment, ApiResponse } from '@/lib/models';
 // GET /api/equipment/[id] - Get single equipment
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const collection = await getCollection<Equipment>(Collections.EQUIPMENT);
         const equipment = await collection.findOne({
-            id: params.id,
+            id,
             isDeleted: { $ne: true }
         });
 
@@ -45,9 +46,10 @@ export async function GET(
 // PUT /api/equipment/[id] - Update equipment
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const body = await request.json();
         const collection = await getCollection<Equipment>(Collections.EQUIPMENT);
 
@@ -70,7 +72,7 @@ export async function PUT(
         delete updateData.createdAt;
 
         const result = await collection.findOneAndUpdate(
-            { id: params.id, isDeleted: { $ne: true } },
+            { id, isDeleted: { $ne: true } },
             { $set: updateData },
             { returnDocument: 'after' }
         );
@@ -107,13 +109,14 @@ export async function PUT(
 // DELETE /api/equipment/[id] - Delete equipment (soft delete)
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const collection = await getCollection<Equipment>(Collections.EQUIPMENT);
 
         const result = await collection.findOneAndUpdate(
-            { id: params.id, isDeleted: { $ne: true } },
+            { id, isDeleted: { $ne: true } },
             {
                 $set: {
                     isDeleted: true,

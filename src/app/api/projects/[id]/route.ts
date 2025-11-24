@@ -5,12 +5,13 @@ import type { Project, ApiResponse } from '@/lib/models';
 // GET /api/projects/[id] - Get single project
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const collection = await getCollection<Project>(Collections.PROJECTS);
         const project = await collection.findOne({
-            id: params.id,
+            id,
             isDeleted: { $ne: true }
         });
 
@@ -45,9 +46,10 @@ export async function GET(
 // PUT /api/projects/[id] - Update project
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const body = await request.json();
         const collection = await getCollection<Project>(Collections.PROJECTS);
 
@@ -70,7 +72,7 @@ export async function PUT(
         delete updateData.createdAt;
 
         const result = await collection.findOneAndUpdate(
-            { id: params.id, isDeleted: { $ne: true } },
+            { id, isDeleted: { $ne: true } },
             { $set: updateData },
             { returnDocument: 'after' }
         );
@@ -107,13 +109,14 @@ export async function PUT(
 // DELETE /api/projects/[id] - Delete project (soft delete)
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const collection = await getCollection<Project>(Collections.PROJECTS);
 
         const result = await collection.findOneAndUpdate(
-            { id: params.id, isDeleted: { $ne: true } },
+            { id, isDeleted: { $ne: true } },
             {
                 $set: {
                     isDeleted: true,
