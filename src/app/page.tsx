@@ -4,8 +4,6 @@ import { useEffect, useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import LiquidBackground from '@/components/LiquidBackground';
 import { generateEmployees, generateProjects, type Employee, type Project } from '@/lib/mockData';
-// @ts-ignore
-const anime = require('animejs');
 
 export default function Dashboard() {
   const [resources, setResources] = useState<Employee[]>([]);
@@ -19,34 +17,40 @@ export default function Dashboard() {
     setProjects(generateProjects());
 
     // Initialize animations
-    setTimeout(() => {
-      anime({
-        targets: '.metric-card',
-        translateY: [30, 0],
-        opacity: [0, 1],
-        delay: anime.stagger(100),
-        duration: 600,
-        easing: 'easeOutQuart'
-      });
+    if (typeof window !== 'undefined') {
+      import('animejs').then((animeModule) => {
+        const anime = animeModule.default;
 
-      anime({
-        targets: '.resource-card',
-        scale: [0.9, 1],
-        opacity: [0, 1],
-        delay: anime.stagger(50, { start: 300 }),
-        duration: 400,
-        easing: 'easeOutQuart'
-      });
+        setTimeout(() => {
+          anime({
+            targets: '.metric-card',
+            translateY: [30, 0],
+            opacity: [0, 1],
+            delay: anime.stagger(100),
+            duration: 600,
+            easing: 'easeOutQuart'
+          });
 
-      anime({
-        targets: '#timelineView > div',
-        translateX: [-20, 0],
-        opacity: [0, 1],
-        delay: anime.stagger(100, { start: 500 }),
-        duration: 500,
-        easing: 'easeOutQuart'
+          anime({
+            targets: '.resource-card',
+            scale: [0.9, 1],
+            opacity: [0, 1],
+            delay: anime.stagger(50, { start: 300 }),
+            duration: 400,
+            easing: 'easeOutQuart'
+          });
+
+          anime({
+            targets: '#timelineView > div',
+            translateX: [-20, 0],
+            opacity: [0, 1],
+            delay: anime.stagger(100, { start: 500 }),
+            duration: 500,
+            easing: 'easeOutQuart'
+          });
+        }, 100);
       });
-    }, 100);
+    }
 
     // Initialize ECharts
     if (typeof window !== 'undefined' && chartRef.current) {
@@ -289,7 +293,7 @@ export default function Dashboard() {
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      {project.startDate.toLocaleDateString()} - {project.endDate.toLocaleDateString()}
+                      {new Date(project.startDate).toLocaleDateString()} - {new Date(project.endDate).toLocaleDateString()}
                     </div>
                     <div className="timeline-slot rounded-lg p-3 mb-3">
                       <p className="text-sm text-gray-500 text-center">Drop resources here</p>

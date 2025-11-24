@@ -2,8 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import Navigation from '@/components/Navigation';
-// @ts-ignore
-const anime = require('animejs');
 
 export default function AnalyticsPage() {
     const utilizationChartRef = useRef<HTMLDivElement>(null);
@@ -11,16 +9,20 @@ export default function AnalyticsPage() {
     const skillsChartRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        setTimeout(() => {
-            anime({
-                targets: '.fade-in-up',
-                translateY: [30, 0],
-                opacity: [0, 1],
-                delay: anime.stagger(100),
-                duration: 600,
-                easing: 'easeOutQuart'
-            });
-        }, 100);
+        import('animejs').then((animeModule) => {
+            const anime = animeModule.default;
+
+            setTimeout(() => {
+                anime({
+                    targets: '.fade-in-up',
+                    translateY: [30, 0],
+                    opacity: [0, 1],
+                    delay: anime.stagger(100),
+                    duration: 600,
+                    easing: 'easeOutQuart'
+                });
+            }, 100);
+        });
 
         // Initialize ECharts
         if (typeof window !== 'undefined') {

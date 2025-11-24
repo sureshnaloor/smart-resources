@@ -6,13 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "node scripts/seed.js"
   },
   "dependencies": {
     "@types/animejs": "^3.1.13",
-    "animejs": "^4.2.2",
+    "animejs": "^3.2.1",
     "echarts": "^6.0.0",
+    "mongodb": "^7.0.0",
     "next": "16.0.3",
+    "next-themes": "^0.4.6",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-p5": "^1.4.1"
