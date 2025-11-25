@@ -3,13 +3,16 @@
 import { useEffect, useState } from 'react';
 import Navigation from '@/components/Navigation';
 import LiquidBackground from '@/components/LiquidBackground';
+import ProjectModal from '@/components/ProjectModal';
 import { projectsApi } from '@/lib/api-client';
 import type { Project } from '@/lib/models';
 
 export default function ProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
-    const [selectedProject, setSelectedProject] = useState<string | null>(null);
+    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
+    const [projectMode, setProjectMode] = useState<'add' | 'edit'>('add');
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -60,8 +63,61 @@ export default function ProjectsPage() {
         }
     };
 
+    const handleAddProject = () => {
+        setProjectMode('add');
+        setSelectedProject(null);
+        setShowModal(true);
+    };
+
+    const handleEditProject = (e: React.MouseEvent, project: Project) => {
+        e.stopPropagation();
+        setProjectMode('edit');
+        setSelectedProject(project);
+        setShowModal(true);
+    };
+
+    const handleDeleteProject = async (e: React.MouseEvent, projectId: string) => {
+        e.stopPropagation();
+        if (!confirm('Are you sure you want to delete this project?')) return;
+
+        try {
+            const response = await projectsApi.delete(projectId);
+            if (response.success) {
+                setProjects(prev => prev.filter(p => p.id !== projectId));
+                if (selectedProjectId === projectId) setSelectedProjectId(null);
+            } else {
+                alert('Failed to delete project');
+            }
+        } catch (err) {
+            console.error('Error deleting project:', err);
+            alert('Failed to delete project');
+        }
+    };
+
+    const handleSaveProject = async (data: Partial<Project>) => {
+        try {
+            if (projectMode === 'add') {
+                const response = await projectsApi.create(data);
+                if (response.success && response.data) {
+                    setProjects(prev => [...prev, response.data as Project]);
+                }
+            } else if (selectedProject) {
+                const response = await projectsApi.update(selectedProject.id, data);
+                if (response.success && response.data) {
+                    setProjects(prev => prev.map(p =>
+                        p.id === selectedProject.id ? response.data as Project : p
+                    ));
+                }
+            }
+            setShowModal(false);
+        } catch (err) {
+            console.error('Error saving project:', err);
+            throw err;
+        }
+    };
+
     const activeProjects = projects.filter(p => p.status === 'active').slice(0, 6);
-    const selectedProjectData = projects.find(p => p.id === selectedProject);
+    const selectedProjectData = projects.find(p => p.id === selectedProjectId);
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
@@ -176,7 +232,7 @@ export default function ProjectsPage() {
                                     <div className="flex items-center justify-between mb-6">
                                         <h3 className="text-lg font-semibold text-gray-900">Active Projects</h3>
                                         <button
-                                            onClick={() => setShowModal(true)}
+                                            onClick={handleAddProject}
                                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                                         >
                                             New Project
@@ -187,8 +243,8 @@ export default function ProjectsPage() {
                                         {activeProjects.map((project) => (
                                             <div
                                                 key={project.id}
-                                                className={`project-card bg-white rounded-lg p-4 border border-gray-200 cursor-pointer ${selectedProject === project.id ? 'ring-2 ring-blue-500' : ''}`}
-                                                onClick={() => setSelectedProject(project.id)}
+                                                className={`project-card bg-white rounded-lg p-4 border border-gray-200 cursor-pointer ${selectedProjectId === project.id ? 'ring-2 ring-blue-500' : ''}`}
+                                                onClick={() => setSelectedProjectId(project.id)}
                                             >
                                                 <div className="flex items-start justify-between mb-3">
                                                     <div className="flex-1">
@@ -200,6 +256,27 @@ export default function ProjectsPage() {
                                                         <span className={`status-indicator status-${project.status}`}></span>
                                                         <span className="text-xs text-gray-500 capitalize">{project.status}</span>
                                                     </div>
+                                                </div>
+
+                                                <div className="flex justify-end space-x-2 mb-3">
+                                                    <button
+                                                        onClick={(e) => handleEditProject(e, project)}
+                                                        className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        title="Edit"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDeleteProject(e, project.id)}
+                                                        className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
 
                                                 <div className="mb-3">
@@ -278,120 +355,13 @@ export default function ProjectsPage() {
                     </main>
 
                     {/* Project Modal */}
-                    {showModal && (
-                        <div className="modal open">
-                            <div className="modal-content max-w-3xl">
-                                <div className="p-6">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-900">Create New Project</h3>
-                                        <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-
-                                    <form className="space-y-6">
-                                        {/* Basic Information */}
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Project Name *</label>
-                                                    <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                                                    <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-                                                </div>
-                                            </div>
-                                            <div className="mt-4">
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                                                <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Project description..."></textarea>
-                                            </div>
-                                        </div>
-
-                                        {/* Schedule & Priority */}
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Schedule & Priority</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
-                                                    <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
-                                                    <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
-                                                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-                                                        <option value="low">Low</option>
-                                                        <option value="medium">Medium</option>
-                                                        <option value="high">High</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Budget & Costs */}
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Budget & Costs</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Total Budget *</label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-2.5 text-gray-500">$</span>
-                                                        <input type="number" min="0" step="0.01" className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0.00" required />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Acquisition Cost</label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-2.5 text-gray-500">$</span>
-                                                        <input type="number" min="0" step="0.01" className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0.00" />
-                                                    </div>
-                                                    <p className="text-xs text-gray-500 mt-1">Initial equipment/material acquisition costs</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Required Resources */}
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Required Resources</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Welders</label>
-                                                    <input type="number" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Pipe Fitters</label>
-                                                    <input type="number" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Electricians</label>
-                                                    <input type="number" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Laborers</label>
-                                                    <input type="number" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex justify-end space-x-3 pt-4 border-t">
-                                            <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                                                Cancel
-                                            </button>
-                                            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                                Create Project
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <ProjectModal
+                        isOpen={showModal}
+                        onClose={() => setShowModal(false)}
+                        onSave={handleSaveProject}
+                        mode={projectMode}
+                        project={selectedProject}
+                    />
                 </>
             )}
         </>
