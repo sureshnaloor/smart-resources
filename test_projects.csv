@@ -1,0 +1,4 @@
+name,description,startDate,endDate,status,priority,budget,location
+Project Alpha,New construction project,2025-01-01,2025-12-31,active,high,1000000,New York
+Project Beta,Renovation work,2025-02-01,2025-06-30,planning,medium,500000,Los Angeles
+Project Gamma,Maintenance contract,2025-03-01,2026-03-01,active,low,200000,Chicago

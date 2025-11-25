@@ -174,10 +174,10 @@ export default function ResourceModal({
             <div className="modal-content max-w-3xl">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-slate-900">
                             {mode === 'add' ? 'Add New' : 'Edit'} {resourceType === 'employee' ? 'Employee' : 'Equipment'}
                         </h3>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -196,51 +196,51 @@ export default function ResourceModal({
                             <>
                                 {/* Basic Information */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
+                                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Basic Information</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Full Name *</label>
                                             <input
                                                 type="text"
                                                 name="name"
                                                 value={formData.name || ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Position *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Position *</label>
                                             <input
                                                 type="text"
                                                 name="position"
                                                 value={formData.position || ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="e.g., Senior Welder"
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Location *</label>
                                             <input
                                                 type="text"
                                                 name="location"
                                                 value={formData.location || ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Years of Experience *</label>
                                             <input
                                                 type="number"
                                                 name="experience"
                                                 value={formData.experience || 0}
                                                 onChange={handleInputChange}
                                                 min="0"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 required
                                             />
                                         </div>
@@ -249,42 +249,42 @@ export default function ResourceModal({
 
                                 {/* Skills & Certifications */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Skills & Certifications</h4>
+                                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Skills & Certifications</h4>
                                     <div className="grid grid-cols-1 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Skills *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Skills *</label>
                                             <input
                                                 type="text"
                                                 value={formData.skills?.join(', ') || ''}
                                                 onChange={handleSkillsChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="e.g., TIG Welding, MIG Welding, Blueprint Reading (comma separated)"
                                                 required
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">Enter skills separated by commas</p>
+                                            <p className="text-xs text-slate-500 mt-1">Enter skills separated by commas</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Certifications</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Certifications</label>
                                             <input
                                                 type="text"
                                                 value={formData.certifications?.join(', ') || ''}
                                                 onChange={handleCertificationsChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="e.g., AWS D1.1, OSHA 30 (comma separated)"
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">Enter certifications separated by commas</p>
+                                            <p className="text-xs text-slate-500 mt-1">Enter certifications separated by commas</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Compensation & Cost */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Compensation & Cost</h4>
+                                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Compensation & Cost</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Annual Salary/Wage *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Annual Salary/Wage *</label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                                <span className="absolute left-3 top-2.5 text-slate-500">$</span>
                                                 <input
                                                     type="number"
                                                     name="wage"
@@ -292,17 +292,17 @@ export default function ResourceModal({
                                                     onChange={handleInputChange}
                                                     min="0"
                                                     step="0.01"
-                                                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                    className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                     placeholder="0.00"
                                                     required
                                                 />
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Annual salary or hourly wage</p>
+                                            <p className="text-xs text-slate-500 mt-1">Annual salary or hourly wage</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Cost Per Hour *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Cost Per Hour *</label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                                <span className="absolute left-3 top-2.5 text-slate-500">$</span>
                                                 <input
                                                     type="number"
                                                     name="costPerHour"
@@ -310,27 +310,27 @@ export default function ResourceModal({
                                                     onChange={handleInputChange}
                                                     min="0"
                                                     step="0.01"
-                                                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                    className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                     placeholder="0.00"
                                                     required
                                                 />
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Actual cost per hour to company (includes benefits, overhead)</p>
+                                            <p className="text-xs text-slate-500 mt-1">Actual cost per hour to company (includes benefits, overhead)</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Availability */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Availability</h4>
+                                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Availability</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Current Status *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Current Status *</label>
                                             <select
                                                 name="availability"
                                                 value={formData.availability || 'available'}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                             >
                                                 <option value="available">Available</option>
                                                 <option value="busy">Busy</option>
@@ -338,17 +338,17 @@ export default function ResourceModal({
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Is Indirect Resource?</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Is Indirect Resource?</label>
                                             <select
                                                 name="isIndirect"
                                                 value={formData.isIndirect ? 'true' : 'false'}
                                                 onChange={(e) => setFormData((prev: any) => ({ ...prev, isIndirect: e.target.value === 'true' }))}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                             >
                                                 <option value="false">No (Direct Labor)</option>
                                                 <option value="true">Yes (Supervisory/Management)</option>
                                             </select>
-                                            <p className="text-xs text-gray-500 mt-1">Indirect resources are supervisory or management staff</p>
+                                            <p className="text-xs text-slate-500 mt-1">Indirect resources are supervisory or management staff</p>
                                         </div>
                                     </div>
                                 </div>
@@ -360,46 +360,46 @@ export default function ResourceModal({
                             <>
                                 {/* Basic Information */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
+                                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Basic Information</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Equipment Name *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Equipment Name *</label>
                                             <input
                                                 type="text"
                                                 name="name"
                                                 value={formData.name || ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="e.g., Excavator #1"
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Make *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Make *</label>
                                             <input
                                                 type="text"
                                                 name="make"
                                                 value={formData.make || ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="e.g., Caterpillar"
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Model *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Model *</label>
                                             <input
                                                 type="text"
                                                 name="model"
                                                 value={formData.model || ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="e.g., 320D"
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Year *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Year *</label>
                                             <input
                                                 type="number"
                                                 name="year"
@@ -407,19 +407,19 @@ export default function ResourceModal({
                                                 onChange={handleInputChange}
                                                 min="1900"
                                                 max="2100"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="2020"
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Location *</label>
                                             <input
                                                 type="text"
                                                 name="location"
                                                 value={formData.location || ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 required
                                             />
                                         </div>
@@ -428,12 +428,12 @@ export default function ResourceModal({
 
                                 {/* Cost Information */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Cost Information</h4>
+                                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Cost Information</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Acquisition Cost *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Acquisition Cost *</label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                                <span className="absolute left-3 top-2.5 text-slate-500">$</span>
                                                 <input
                                                     type="number"
                                                     name="value"
@@ -441,17 +441,17 @@ export default function ResourceModal({
                                                     onChange={handleInputChange}
                                                     min="0"
                                                     step="0.01"
-                                                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                    className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                     placeholder="0.00"
                                                     required
                                                 />
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Purchase or current value of equipment</p>
+                                            <p className="text-xs text-slate-500 mt-1">Purchase or current value of equipment</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Cost Per Hour *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Cost Per Hour *</label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                                <span className="absolute left-3 top-2.5 text-slate-500">$</span>
                                                 <input
                                                     type="number"
                                                     name="costPerHour"
@@ -459,15 +459,15 @@ export default function ResourceModal({
                                                     onChange={handleInputChange}
                                                     min="0"
                                                     step="0.01"
-                                                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                    className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                     placeholder="0.00"
                                                     required
                                                 />
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Operating cost per hour (fuel, maintenance, depreciation)</p>
+                                            <p className="text-xs text-slate-500 mt-1">Operating cost per hour (fuel, maintenance, depreciation)</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Depreciation Rate (%)</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Depreciation Rate (%)</label>
                                             <div className="relative">
                                                 <input
                                                     type="number"
@@ -477,47 +477,47 @@ export default function ResourceModal({
                                                     min="0"
                                                     max="100"
                                                     step="0.1"
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                     placeholder="10"
                                                 />
-                                                <span className="absolute right-3 top-2.5 text-gray-500">%</span>
+                                                <span className="absolute right-3 top-2.5 text-slate-500">%</span>
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Annual depreciation percentage</p>
+                                            <p className="text-xs text-slate-500 mt-1">Annual depreciation percentage</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Maintenance & Availability */}
                                 <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Maintenance & Availability</h4>
+                                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Maintenance & Availability</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Last Maintenance Date</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Last Maintenance Date</label>
                                             <input
                                                 type="date"
                                                 name="lastMaintenance"
                                                 value={formData.lastMaintenance ? new Date(formData.lastMaintenance).toISOString().split('T')[0] : ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Next Maintenance Date</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Next Maintenance Date</label>
                                             <input
                                                 type="date"
                                                 name="nextMaintenance"
                                                 value={formData.nextMaintenance ? new Date(formData.nextMaintenance).toISOString().split('T')[0] : ''}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Current Status *</label>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Current Status *</label>
                                             <select
                                                 name="availability"
                                                 value={formData.availability || 'available'}
                                                 onChange={handleInputChange}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                             >
                                                 <option value="available">Available</option>
                                                 <option value="busy">In Use</option>
@@ -534,7 +534,7 @@ export default function ResourceModal({
                                 type="button"
                                 onClick={onClose}
                                 disabled={loading}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
                             >
                                 Cancel
                             </button>

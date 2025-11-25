@@ -127,10 +127,10 @@ export default function ProjectModal({
             <div className="modal-content max-w-3xl">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-slate-900">
                             {mode === 'add' ? 'Create New Project' : 'Edit Project'}
                         </h3>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -146,39 +146,39 @@ export default function ProjectModal({
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Basic Information */}
                         <div>
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
+                            <h4 className="text-sm font-semibold text-slate-900 mb-3">Basic Information</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Project Name *</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Project Name *</label>
                                     <input
                                         type="text"
                                         name="name"
                                         value={formData.name}
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Location *</label>
                                     <input
                                         type="text"
                                         name="location"
                                         value={formData.location}
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                         required
                                     />
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>
                                 <textarea
                                     name="description"
                                     value={formData.description}
                                     onChange={handleInputChange}
                                     rows={3}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                     placeholder="Project description..."
                                 ></textarea>
                             </div>
@@ -186,37 +186,37 @@ export default function ProjectModal({
 
                         {/* Schedule & Priority */}
                         <div>
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Schedule & Priority</h4>
+                            <h4 className="text-sm font-semibold text-slate-900 mb-3">Schedule & Priority</h4>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Start Date *</label>
                                     <input
                                         type="date"
                                         name="startDate"
                                         value={formData.startDate}
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">End Date *</label>
                                     <input
                                         type="date"
                                         name="endDate"
                                         value={formData.endDate}
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Priority *</label>
                                     <select
                                         name="priority"
                                         value={formData.priority}
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                     >
                                         <option value="low">Low</option>
                                         <option value="medium">Medium</option>
@@ -224,12 +224,12 @@ export default function ProjectModal({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Status *</label>
                                     <select
                                         name="status"
                                         value={formData.status}
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                     >
                                         <option value="planning">Planning</option>
                                         <option value="active">Active</option>
@@ -242,12 +242,12 @@ export default function ProjectModal({
 
                         {/* Budget & Costs */}
                         <div>
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Budget & Costs</h4>
+                            <h4 className="text-sm font-semibold text-slate-900 mb-3">Budget & Costs</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Total Budget *</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Total Budget *</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                        <span className="absolute left-3 top-2.5 text-slate-500">$</span>
                                         <input
                                             type="number"
                                             name="budget"
@@ -255,16 +255,16 @@ export default function ProjectModal({
                                             onChange={handleInputChange}
                                             min="0"
                                             step="0.01"
-                                            className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                            className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                             placeholder="0.00"
                                             required
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Actual Cost</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Actual Cost</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                                        <span className="absolute left-3 top-2.5 text-slate-500">$</span>
                                         <input
                                             type="number"
                                             name="actualCost"
@@ -272,7 +272,7 @@ export default function ProjectModal({
                                             onChange={handleInputChange}
                                             min="0"
                                             step="0.01"
-                                            className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                            className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                             placeholder="0.00"
                                         />
                                     </div>
@@ -282,17 +282,17 @@ export default function ProjectModal({
 
                         {/* Required Resources */}
                         <div>
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Required Resources</h4>
+                            <h4 className="text-sm font-semibold text-slate-900 mb-3">Required Resources</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {['Welders', 'Pipe Fitters', 'Electricians', 'Laborers'].map((resource) => (
                                     <div key={resource}>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">{resource}</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">{resource}</label>
                                         <input
                                             type="number"
                                             value={formData.requiredResources[resource] || 0}
                                             onChange={(e) => handleResourceChange(resource, e.target.value)}
                                             min="0"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                             placeholder="0"
                                         />
                                     </div>
@@ -305,7 +305,7 @@ export default function ProjectModal({
                                 type="button"
                                 onClick={onClose}
                                 disabled={loading}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
                             >
                                 Cancel
                             </button>

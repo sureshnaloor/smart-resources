@@ -20,11 +20,25 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  background: #f8fafc;
+  color: #0f172a;
   min-height: 100vh;
   margin: 0;
   padding: 0;
   transition: background-color 0.3s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #0f172a;
+}
+
+p {
+  color: #334155;
 }
 
 .dark body {
@@ -176,6 +190,10 @@ body {
 }
 
 .hero-section {
+  background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%);
+}
+
+.dark .hero-section {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(51, 65, 85, 0.8) 100%);
 }
 
