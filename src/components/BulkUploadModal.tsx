@@ -40,6 +40,10 @@ export default function BulkUploadModal({ isOpen, onClose, type, onUploadComplet
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(sheet);
+                // Remove the first row (sample data)
+                if (jsonData.length > 0) {
+                    jsonData.shift();
+                }
                 setPreviewData(jsonData);
             } catch (err) {
                 setError('Failed to parse file. Please ensure it is a valid Excel or CSV file.');
@@ -106,9 +110,9 @@ export default function BulkUploadModal({ isOpen, onClose, type, onUploadComplet
     const getTemplateHeaders = () => {
         switch (type) {
             case 'employee':
-                return ['name', 'position', 'location', 'experience', 'skills', 'wage', 'costPerHour'];
+                return ['name', 'employeeNumber', 'governmentId', 'tier', 'position', 'location', 'experience', 'skills', 'wage', 'costPerHour'];
             case 'equipment':
-                return ['name', 'make', 'model', 'year', 'location', 'value', 'costPerHour'];
+                return ['name', 'make', 'model', 'year', 'location', 'value', 'costPerHour', 'depreciationRate'];
             case 'project':
                 return ['name', 'description', 'startDate', 'endDate', 'status', 'priority', 'budget', 'location'];
             default:
@@ -116,9 +120,23 @@ export default function BulkUploadModal({ isOpen, onClose, type, onUploadComplet
         }
     };
 
+    const getTemplateSampleData = () => {
+        switch (type) {
+            case 'employee':
+                return ['John Doe', 'EMP-001', 'ID-12345', 3, 'Senior Welder', 'New York', 5, 'Welding, Fitting', 75000, 45];
+            case 'equipment':
+                return ['Excavator #1', 'Caterpillar', '320D', 2020, 'Site A', 150000, 85, 10];
+            case 'project':
+                return ['Project Alpha', 'New construction project', '2024-01-01', '2024-12-31', 'planning', 'high', 500000, 'New York'];
+            default:
+                return [];
+        }
+    };
+
     const downloadTemplate = () => {
         const headers = getTemplateHeaders();
-        const ws = XLSX.utils.aoa_to_sheet([headers]);
+        const sampleData = getTemplateSampleData();
+        const ws = XLSX.utils.aoa_to_sheet([headers, sampleData]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Template');
         XLSX.writeFile(wb, `${type}_template.xlsx`);
@@ -169,6 +187,7 @@ export default function BulkUploadModal({ isOpen, onClose, type, onUploadComplet
                                 </svg>
                                 <p className="text-lg font-medium text-slate-700">Click to upload or drag and drop</p>
                                 <p className="text-sm text-slate-500 mt-2">Supported formats: .csv, .xlsx, .xls</p>
+                                <p className="text-xs text-amber-600 mt-2">Note: The first row after headers is considered a sample and will be skipped.</p>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); downloadTemplate(); }}
                                     className="mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium"

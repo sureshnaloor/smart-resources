@@ -17,6 +17,9 @@ const getDefaultFormData = (type: 'employee' | 'equipment') => {
     if (type === 'employee') {
         return {
             name: '',
+            employeeNumber: '',
+            governmentId: '',
+            tier: 1,
             position: '',
             location: '',
             experience: 0,
@@ -243,6 +246,50 @@ export default function ResourceModal({
                                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
                                                 required
                                             />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Identification & Tier */}
+                                <div>
+                                    <h4 className="text-sm font-semibold text-slate-900 mb-3">Identification & Tier</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Employee Number</label>
+                                            <input
+                                                type="text"
+                                                name="employeeNumber"
+                                                value={formData.employeeNumber || ''}
+                                                onChange={handleInputChange}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                placeholder="EMP-001"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Government ID</label>
+                                            <input
+                                                type="text"
+                                                name="governmentId"
+                                                value={formData.governmentId || ''}
+                                                onChange={handleInputChange}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                placeholder="ID Number"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Tier (1-5)</label>
+                                            <select
+                                                name="tier"
+                                                value={formData.tier || 1}
+                                                onChange={handleInputChange}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                            >
+                                                <option value="1">Tier 1 (Lowest)</option>
+                                                <option value="2">Tier 2</option>
+                                                <option value="3">Tier 3</option>
+                                                <option value="4">Tier 4</option>
+                                                <option value="5">Tier 5 (Highest)</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -552,6 +599,6 @@ export default function ResourceModal({
                     </form>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

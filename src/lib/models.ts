@@ -12,6 +12,9 @@ export interface BaseDocument {
 export interface Employee extends BaseDocument {
     id: string;
     name: string;
+    employeeNumber?: string;
+    governmentId?: string;
+    tier?: 1 | 2 | 3 | 4 | 5;
     type: 'employee';
     position: string;
     skills: string[];
@@ -75,8 +78,6 @@ export interface Project extends BaseDocument {
     location: string;
     progress: number;
     budget: number;
-    actualCost?: number; // Tracked actual cost
-    requiredResources: Record<string, number>;
     assignedResources: string[]; // IDs of assigned employees/equipment/groups
 }
 

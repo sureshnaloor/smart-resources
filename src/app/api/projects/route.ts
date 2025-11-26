@@ -79,9 +79,7 @@ export async function POST(request: NextRequest) {
             startDate: new Date(body.startDate),
             endDate: new Date(body.endDate),
             assignedResources: body.assignedResources || [],
-            requiredResources: body.requiredResources || {},
             progress: body.progress || 0,
-            actualCost: body.actualCost || 0,
         };
 
         const result = await collection.insertOne(newProject as Project);

@@ -307,9 +307,7 @@ export default function ProjectsPage() {
                                                     <span>Budget: ${project.budget.toLocaleString()}</span>
                                                 </div>
 
-                                                <div className="mt-3">
-                                                    <p className="text-xs text-gray-600">Resources: {Object.values(project.requiredResources).reduce((a, b) => a + b, 0)} required</p>
-                                                </div>
+
                                             </div>
                                         ))}
                                     </div>
@@ -328,25 +326,7 @@ export default function ProjectsPage() {
                             <div className="lg:col-span-1">
                                 <div className="glass-card rounded-lg p-6 mb-6">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Resource Requirements</h3>
-                                    {selectedProjectData ? (
-                                        <div className="space-y-3">
-                                            {Object.entries(selectedProjectData.requiredResources).map(([resource, count]) => (
-                                                <div key={resource} className="bg-gray-50 rounded-lg p-3">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="font-medium text-gray-900">{resource}</span>
-                                                        <span className="text-sm text-gray-600">{count} needed</span>
-                                                    </div>
-                                                    <div className="mt-2">
-                                                        <div className="w-full bg-gray-200 rounded-full h-2">
-                                                            <div className="bg-green-600 h-2 rounded-full" style={{ width: `${Math.random() * 100}%` }}></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-gray-500">Select a project to view resource requirements</p>
-                                    )}
+                                    <p className="text-sm text-gray-500">Resource requirements are calculated dynamically during execution.</p>
                                 </div>
 
                                 <div className="glass-card rounded-lg p-6">

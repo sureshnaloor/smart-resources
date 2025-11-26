@@ -19,14 +19,7 @@ const getDefaultFormData = () => ({
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 days
     priority: 'medium',
     status: 'active',
-    budget: 0,
-    actualCost: 0,
-    requiredResources: {
-        'Welders': 0,
-        'Pipe Fitters': 0,
-        'Electricians': 0,
-        'Laborers': 0
-    }
+    budget: 0
 });
 
 export default function ProjectModal({
@@ -47,13 +40,6 @@ export default function ProjectModal({
                     ...project,
                     startDate: new Date(project.startDate).toISOString().split('T')[0],
                     endDate: new Date(project.endDate).toISOString().split('T')[0],
-                    requiredResources: {
-                        'Welders': 0,
-                        'Pipe Fitters': 0,
-                        'Electricians': 0,
-                        'Laborers': 0,
-                        ...project.requiredResources
-                    }
                 });
             } else {
                 setFormData(getDefaultFormData());
@@ -76,16 +62,7 @@ export default function ProjectModal({
         }));
     };
 
-    const handleResourceChange = (resource: string, value: string) => {
-        const count = parseInt(value) || 0;
-        setFormData((prev: any) => ({
-            ...prev,
-            requiredResources: {
-                ...prev.requiredResources,
-                [resource]: count
-            }
-        }));
-    };
+
 
     const validateForm = (): boolean => {
         if (!formData.name || !formData.location || !formData.startDate || !formData.endDate) {
@@ -261,44 +238,10 @@ export default function ProjectModal({
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Actual Cost</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-2.5 text-slate-500">$</span>
-                                        <input
-                                            type="number"
-                                            name="actualCost"
-                                            value={formData.actualCost}
-                                            onChange={handleInputChange}
-                                            min="0"
-                                            step="0.01"
-                                            className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
-                        {/* Required Resources */}
-                        <div>
-                            <h4 className="text-sm font-semibold text-slate-900 mb-3">Required Resources</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {['Welders', 'Pipe Fitters', 'Electricians', 'Laborers'].map((resource) => (
-                                    <div key={resource}>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">{resource}</label>
-                                        <input
-                                            type="number"
-                                            value={formData.requiredResources[resource] || 0}
-                                            onChange={(e) => handleResourceChange(resource, e.target.value)}
-                                            min="0"
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+
 
                         <div className="flex justify-end space-x-3 pt-4 border-t">
                             <button
