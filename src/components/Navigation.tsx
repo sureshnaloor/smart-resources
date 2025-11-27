@@ -47,6 +47,20 @@ export default function Navigation() {
                 >
                   Analytics
                 </Link>
+                <Link
+                  href="/assignments"
+                  className={`nav-link px-3 py-2 rounded-md text-sm font-medium ${isActive('/assignments') ? 'active text-blue-600 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white'
+                    }`}
+                >
+                  Assignments
+                </Link>
+                <Link
+                  href="/masters"
+                  className={`nav-link px-3 py-2 rounded-md text-sm font-medium ${isActive('/masters') ? 'active text-blue-600 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white'
+                    }`}
+                >
+                  Masters
+                </Link>
               </div>
             </div>
           </div>

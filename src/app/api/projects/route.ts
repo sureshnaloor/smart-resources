@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
             startDate: new Date(body.startDate),
             endDate: new Date(body.endDate),
             assignedResources: body.assignedResources || [],
+            resourceRequirements: body.resourceRequirements || [],
             progress: body.progress || 0,
         };
 

@@ -45,7 +45,8 @@ export const Collections = {
   EQUIPMENT: 'equipment',
   PROJECTS: 'projects',
   BUSINESS_CENTERS: 'businessCenters',
-  RESOURCE_GROUPS: 'resourceGroups',
+  RESOURCE_GROUPS: 'resource_groups',
+  RESOURCE_MASTERS: 'resource_masters',
 } as const;
 
 export default clientPromise;

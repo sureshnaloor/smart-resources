@@ -66,6 +66,14 @@ export interface ResourceGroup extends BaseDocument {
     location: string;
 }
 
+// Resource Master Model
+export interface ResourceMaster extends BaseDocument {
+    resourceId: string;
+    resourceName: string;
+    description: string;
+    resourceType: 'manpower' | 'equipment';
+}
+
 // Project Model
 export interface Project extends BaseDocument {
     id: string;
@@ -78,6 +86,12 @@ export interface Project extends BaseDocument {
     location: string;
     progress: number;
     budget: number;
+    resourceRequirements: {
+        resourceMasterId: string;
+        quantity: number;
+        startDate?: Date;
+        endDate?: Date;
+    }[];
     assignedResources: string[]; // IDs of assigned employees/equipment/groups
 }
 
@@ -91,6 +105,16 @@ export interface BusinessCenter extends BaseDocument {
     manager: string;
     contact: string;
     location?: string;
+}
+
+// Assignment Model
+export interface Assignment extends BaseDocument {
+    projectId: string;
+    resourceId: string; // Employee ID or Equipment ID
+    resourceType: 'employee' | 'equipment';
+    startDate: Date;
+    endDate: Date;
+    status: 'active' | 'completed';
 }
 
 // API Response types

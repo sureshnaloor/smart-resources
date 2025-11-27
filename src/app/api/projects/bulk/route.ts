@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
                 budget: Number(data.budget) || 0,
                 progress: Number(data.progress) || 0,
                 assignedResources: [],
+                resourceRequirements: [],
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 isDeleted: false,

@@ -5,22 +5,38 @@ import Navigation from '@/components/Navigation';
 import LiquidBackground from '@/components/LiquidBackground';
 import ProjectModal from '@/components/ProjectModal';
 import BulkUploadModal from '@/components/BulkUploadModal';
+import ResourceRequirementModal from '@/components/ResourceRequirementModal';
 import { projectsApi } from '@/lib/api-client';
-import type { Project } from '@/lib/models';
+import type { Project, ResourceMaster } from '@/lib/models';
 
 export default function ProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [showBulkModal, setShowBulkModal] = useState(false);
+    const [showRequirementModal, setShowRequirementModal] = useState(false);
     const [projectMode, setProjectMode] = useState<'add' | 'edit'>('add');
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [resourceMasters, setResourceMasters] = useState<ResourceMaster[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchProjects();
+        fetchResourceMasters();
     }, []);
+
+    const fetchResourceMasters = async () => {
+        try {
+            const response = await fetch('/api/resource-masters');
+            const result = await response.json();
+            if (result.success) {
+                setResourceMasters(result.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch resource masters:', error);
+        }
+    };
 
     const fetchProjects = async () => {
         setLoading(true);
@@ -96,6 +112,12 @@ export default function ProjectsPage() {
         }
     };
 
+    const handleResourceRequired = (e: React.MouseEvent, project: Project) => {
+        e.stopPropagation();
+        setSelectedProject(project);
+        setShowRequirementModal(true);
+    };
+
     const handleSaveProject = async (data: Partial<Project>) => {
         try {
             if (projectMode === 'add') {
@@ -118,7 +140,22 @@ export default function ProjectsPage() {
         }
     };
 
-    const activeProjects = projects.filter(p => p.status === 'active').slice(0, 6);
+    const [viewMode, setViewMode] = useState<'active' | 'completed' | 'on-hold'>('active');
+
+    // ... (existing code)
+
+    const statusOrder: Record<string, number> = { 'planning': 1, 'active': 2, 'completed': 3, 'on-hold': 4 };
+
+    const filteredProjects = projects.filter(p => {
+        if (viewMode === 'active') return p.status === 'active' || p.status === 'planning';
+        if (viewMode === 'completed') return p.status === 'completed';
+        if (viewMode === 'on-hold') return p.status === 'on-hold';
+        return false;
+    });
+
+    const sortedProjects = [...filteredProjects].sort((a, b) => {
+        return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+    });
     const selectedProjectData = projects.find(p => p.id === selectedProjectId);
 
     const getPriorityColor = (priority: string) => {
@@ -232,7 +269,35 @@ export default function ProjectsPage() {
                             <div className="lg:col-span-2">
                                 <div className="glass-card rounded-lg p-6 mb-6">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-900">Active Projects</h3>
+                                        <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+                                            <button
+                                                onClick={() => { setViewMode('active'); setSelectedProjectId(null); }}
+                                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'active'
+                                                    ? 'bg-white text-blue-600 shadow-sm'
+                                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                                                    }`}
+                                            >
+                                                Active Projects
+                                            </button>
+                                            <button
+                                                onClick={() => { setViewMode('completed'); setSelectedProjectId(null); }}
+                                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'completed'
+                                                    ? 'bg-white text-blue-600 shadow-sm'
+                                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                                                    }`}
+                                            >
+                                                Completed Projects
+                                            </button>
+                                            <button
+                                                onClick={() => { setViewMode('on-hold'); setSelectedProjectId(null); }}
+                                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'on-hold'
+                                                    ? 'bg-white text-blue-600 shadow-sm'
+                                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                                                    }`}
+                                            >
+                                                On Hold
+                                            </button>
+                                        </div>
                                         <div className="flex space-x-3">
                                             <button
                                                 onClick={() => setShowBulkModal(true)}
@@ -253,7 +318,7 @@ export default function ProjectsPage() {
                                     </div>
 
                                     <div className="space-y-4">
-                                        {activeProjects.map((project) => (
+                                        {sortedProjects.map((project) => (
                                             <div
                                                 key={project.id}
                                                 className={`project-card bg-white rounded-lg p-4 border border-gray-200 cursor-pointer ${selectedProjectId === project.id ? 'ring-2 ring-blue-500' : ''}`}
@@ -272,24 +337,40 @@ export default function ProjectsPage() {
                                                 </div>
 
                                                 <div className="flex justify-end space-x-2 mb-3">
-                                                    <button
-                                                        onClick={(e) => handleEditProject(e, project)}
-                                                        className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => handleDeleteProject(e, project.id)}
-                                                        className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                        title="Delete"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
+                                                    {project.status !== 'completed' && (
+                                                        <>
+                                                            <button
+                                                                onClick={(e) => handleEditProject(e, project)}
+                                                                className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                title="Edit"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                </svg>
+                                                            </button>
+                                                            {(project.status === 'planning' || project.status === 'active') && (
+                                                                <button
+                                                                    onClick={(e) => handleResourceRequired(e, project)}
+                                                                    className="px-3 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded transition-colors text-xs font-medium flex items-center space-x-1"
+                                                                    title="Manage Resource Requirements"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                                                    </svg>
+                                                                    <span>Resources Required</span>
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={(e) => handleDeleteProject(e, project.id)}
+                                                                className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                title="Delete"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
 
                                                 <div className="mb-3">
@@ -324,25 +405,88 @@ export default function ProjectsPage() {
 
                             {/* Resource Planning */}
                             <div className="lg:col-span-1">
-                                <div className="glass-card rounded-lg p-6 mb-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Resource Requirements</h3>
-                                    <p className="text-sm text-gray-500">Resource requirements are calculated dynamically during execution.</p>
-                                </div>
-
-                                <div className="glass-card rounded-lg p-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Skill Gap Analysis</h3>
-                                    <div className="space-y-2">
-                                        {skillGaps.map((gap, idx) => (
-                                            <div key={idx} className={`flex items-center justify-between p-3 rounded-lg ${gap.priority === 'high' ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
-                                                <div>
-                                                    <p className="font-medium text-gray-900">{gap.skill}</p>
-                                                    <p className="text-sm text-gray-600">{gap.gap} resources needed</p>
-                                                </div>
-                                                <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(gap.priority)}`}>{gap.priority}</span>
+                                {selectedProjectData ? (
+                                    selectedProjectData.status === 'completed' || selectedProjectData.status === 'on-hold' ? (
+                                        <div className="glass-card rounded-lg p-6 text-center">
+                                            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
                                             </div>
-                                        ))}
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">Not Applicable</h3>
+                                            <p className="text-sm text-gray-500">No resource requirements for {selectedProjectData.status} projects.</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="glass-card rounded-lg p-6 mb-6">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Gap Analysis</h3>
+                                                <div className="space-y-3">
+                                                    {selectedProjectData.resourceRequirements?.length > 0 ? (
+                                                        selectedProjectData.resourceRequirements.map((req, idx) => {
+                                                            const master = resourceMasters.find(m => m.resourceId === req.resourceMasterId);
+                                                            const assignedCount = 0; // TODO: Implement assignment logic
+                                                            const gap = req.quantity - assignedCount;
+
+                                                            if (gap <= 0) return null;
+
+                                                            return (
+                                                                <div key={idx} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
+                                                                    <div>
+                                                                        <p className="font-medium text-gray-900">{master?.resourceName || req.resourceMasterId}</p>
+                                                                        <p className="text-sm text-gray-600">{gap} un-filled</p>
+                                                                    </div>
+                                                                    <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">High Priority</span>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500">No resource gaps identified.</p>
+                                                    )}
+                                                    {selectedProjectData.resourceRequirements?.every(req => req.quantity <= 0) && (
+                                                        <p className="text-sm text-gray-500">No resource gaps identified.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="glass-card rounded-lg p-6 mb-6">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Resource Requirements</h3>
+                                                <div className="space-y-3">
+                                                    {selectedProjectData.resourceRequirements?.length > 0 ? (
+                                                        selectedProjectData.resourceRequirements.map((req, idx) => {
+                                                            const master = resourceMasters.find(m => m.resourceId === req.resourceMasterId);
+                                                            return (
+                                                                <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                                                    <div>
+                                                                        <p className="font-medium text-gray-900">{master?.resourceName || req.resourceMasterId}</p>
+                                                                        <p className="text-xs text-gray-500 capitalize">{master?.resourceType}</p>
+                                                                    </div>
+                                                                    <span className="font-semibold text-blue-600">{req.quantity} Required</span>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500">No requirements defined.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="glass-card rounded-lg p-6">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Resources Assigned</h3>
+                                                <p className="text-sm text-gray-500 italic">No resources currently assigned.</p>
+                                            </div>
+                                        </>
+                                    )
+                                ) : (
+                                    <div className="glass-card rounded-lg p-6 text-center sticky top-6">
+                                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Project</h3>
+                                        <p className="text-sm text-gray-500">Click on a project card to view its detailed resource analysis and requirements.</p>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </main>
@@ -363,6 +507,16 @@ export default function ProjectsPage() {
                         type="project"
                         onUploadComplete={fetchProjects}
                     />
+
+                    {/* Resource Requirement Modal */}
+                    {selectedProject && (
+                        <ResourceRequirementModal
+                            isOpen={showRequirementModal}
+                            onClose={() => setShowRequirementModal(false)}
+                            onSave={fetchProjects}
+                            project={selectedProject}
+                        />
+                    )}
                 </>
             )}
         </>

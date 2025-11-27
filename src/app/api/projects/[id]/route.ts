@@ -66,6 +66,15 @@ export async function PUT(
             updateData.endDate = new Date(updateData.endDate);
         }
 
+        // Convert dates in resourceRequirements
+        if (updateData.resourceRequirements && Array.isArray(updateData.resourceRequirements)) {
+            updateData.resourceRequirements = updateData.resourceRequirements.map((req: any) => ({
+                ...req,
+                startDate: req.startDate ? new Date(req.startDate) : undefined,
+                endDate: req.endDate ? new Date(req.endDate) : undefined,
+            }));
+        }
+
         // Remove fields that shouldn't be updated
         delete updateData._id;
         delete updateData.id;
