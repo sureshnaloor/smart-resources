@@ -89,6 +89,21 @@ export default function AssignmentsPage() {
         e.preventDefault();
         if (!draggedResource || !selectedProjectId || !startDate || !endDate) return;
 
+        // Client-side validation for pending count
+        if (draggedResource && selectedProjectId) {
+            const resource = draggedResource.type === 'employee'
+                ? employees.find(e => e.id === draggedResource.id)
+                : equipment.find(e => e.id === draggedResource.id);
+
+            if (resource?.resourceMasterId) {
+                const pending = getPendingCount(resource.resourceMasterId);
+                if (pending <= 0) {
+                    alert('This resource requirement is already fulfilled.');
+                    return;
+                }
+            }
+        }
+
         try {
             const response = await fetch('/api/assignments', {
                 method: 'POST',
@@ -116,20 +131,57 @@ export default function AssignmentsPage() {
         return assignments.some(a => a.resourceId === id);
     };
 
+    const selectedProject = projects.find(p => p.id === selectedProjectId);
+    const projectStartDate = selectedProject?.startDate ? new Date(selectedProject.startDate) : undefined;
+    const projectEndDate = selectedProject?.endDate ? new Date(selectedProject.endDate) : undefined;
+
+    // Reset dates when project changes
+    useEffect(() => {
+        setStartDate(undefined);
+        setEndDate(undefined);
+    }, [selectedProjectId]);
+
+    const projectAssignments = assignments.filter(a => a.projectId === selectedProjectId);
+
+    // Calculate assigned counts by resource master ID
+    const assignedCounts = new Map<string, number>();
+    projectAssignments.forEach(a => {
+        const resource = a.resourceType === 'employee'
+            ? employees.find(e => e.id === a.resourceId)
+            : equipment.find(e => e.id === a.resourceId);
+
+        if (resource?.resourceMasterId) {
+            assignedCounts.set(resource.resourceMasterId, (assignedCounts.get(resource.resourceMasterId) || 0) + 1);
+        }
+    });
+
+    // Helper to get pending count
+    const getPendingCount = (resourceMasterId?: string) => {
+        if (!selectedProject || !resourceMasterId) return 0;
+        const requirement = selectedProject.resourceRequirements?.find(r => r.resourceMasterId === resourceMasterId);
+        if (!requirement) return 0;
+        const assigned = assignedCounts.get(resourceMasterId) || 0;
+        return Math.max(0, requirement.quantity - assigned);
+    };
+
+    // Get required resource master IDs from the selected project
+    const requiredResourceMasterIds = new Set(
+        selectedProject?.resourceRequirements?.map(r => r.resourceMasterId) || []
+    );
+
     const availableEmployees = employees.filter(e =>
         !isResourceAssigned(e.id) &&
         (e.name.toLowerCase().includes(filterText.toLowerCase()) ||
-            e.position.toLowerCase().includes(filterText.toLowerCase()))
+            e.position.toLowerCase().includes(filterText.toLowerCase())) &&
+        (selectedProject ? (e.resourceMasterId && requiredResourceMasterIds.has(e.resourceMasterId)) : true)
     );
 
     const availableEquipment = equipment.filter(e =>
         !isResourceAssigned(e.id) &&
         (e.name.toLowerCase().includes(filterText.toLowerCase()) ||
-            e.type.toLowerCase().includes(filterText.toLowerCase()))
+            e.type.toLowerCase().includes(filterText.toLowerCase())) &&
+        (selectedProject ? (e.resourceMasterId && requiredResourceMasterIds.has(e.resourceMasterId)) : true)
     );
-
-    const selectedProject = projects.find(p => p.id === selectedProjectId);
-    const projectAssignments = assignments.filter(a => a.projectId === selectedProjectId);
 
     return (
         <>
@@ -156,7 +208,7 @@ export default function AssignmentsPage() {
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
                                 >
                                     <option value="">Select a project...</option>
-                                    {projects.map(p => (
+                                    {projects.filter(p => p.status === 'active').map(p => (
                                         <option key={p.id} value={p.id}>{p.name}</option>
                                     ))}
                                 </select>
@@ -166,7 +218,8 @@ export default function AssignmentsPage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                                 <button
                                     onClick={() => { setShowStartPicker(!showStartPicker); setShowEndPicker(false); }}
-                                    className="w-full px-4 py-2 text-left rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    disabled={!selectedProjectId}
+                                    className={`w-full px-4 py-2 text-left rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 outline-none ${!selectedProjectId ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     {startDate ? startDate.toLocaleDateString() : 'Select Start Date'}
                                 </button>
@@ -174,6 +227,8 @@ export default function AssignmentsPage() {
                                     <div className="absolute top-full left-0 mt-2 z-50">
                                         <CalendarPicker
                                             selectedDate={startDate}
+                                            minDate={projectStartDate}
+                                            maxDate={projectEndDate}
                                             onSelect={(date) => { setStartDate(date); setShowStartPicker(false); }}
                                         />
                                     </div>
@@ -184,7 +239,8 @@ export default function AssignmentsPage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                                 <button
                                     onClick={() => { setShowEndPicker(!showEndPicker); setShowStartPicker(false); }}
-                                    className="w-full px-4 py-2 text-left rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    disabled={!selectedProjectId || !startDate}
+                                    className={`w-full px-4 py-2 text-left rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 outline-none ${(!selectedProjectId || !startDate) ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     {endDate ? endDate.toLocaleDateString() : 'Select End Date'}
                                 </button>
@@ -192,7 +248,8 @@ export default function AssignmentsPage() {
                                     <div className="absolute top-full left-0 mt-2 z-50">
                                         <CalendarPicker
                                             selectedDate={endDate}
-                                            minDate={startDate}
+                                            minDate={startDate || projectStartDate}
+                                            maxDate={projectEndDate}
                                             onSelect={(date) => { setEndDate(date); setShowEndPicker(false); }}
                                         />
                                     </div>
@@ -279,58 +336,82 @@ export default function AssignmentsPage() {
 
                                 <div className="flex-1 overflow-y-auto space-y-3 pr-2">
                                     {/* Employees */}
-                                    {availableEmployees.map(emp => (
-                                        <div
-                                            key={emp.id}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, emp.id, 'employee')}
-                                            className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 cursor-move hover:shadow-md transition-shadow flex items-center justify-between group"
-                                        >
-                                            <div className="flex items-center">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                    </svg>
+                                    {availableEmployees.map(emp => {
+                                        const pending = getPendingCount(emp.resourceMasterId);
+                                        const isDraggable = pending > 0;
+
+                                        return (
+                                            <div
+                                                key={emp.id}
+                                                draggable={isDraggable}
+                                                onDragStart={(e) => isDraggable && handleDragStart(e, emp.id, 'employee')}
+                                                className={`bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group transition-all ${isDraggable ? 'cursor-move hover:shadow-md' : 'opacity-60 cursor-not-allowed bg-gray-50'}`}
+                                            >
+                                                <div className="flex items-center">
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${isDraggable ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'}`}>
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{emp.name}</p>
+                                                        <p className="text-xs text-gray-500">{emp.position}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium text-gray-900">{emp.name}</p>
-                                                    <p className="text-xs text-gray-500">{emp.position}</p>
+                                                <div className="flex items-center">
+                                                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${isDraggable ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                                                        {pending} Pending
+                                                    </span>
+                                                    {isDraggable && (
+                                                        <div className="opacity-0 group-hover:opacity-100 text-gray-400 ml-2">
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <div className="opacity-0 group-hover:opacity-100 text-gray-400">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
 
                                     {/* Equipment */}
-                                    {availableEquipment.map(eq => (
-                                        <div
-                                            key={eq.id}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, eq.id, 'equipment')}
-                                            className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 cursor-move hover:shadow-md transition-shadow flex items-center justify-between group"
-                                        >
-                                            <div className="flex items-center">
-                                                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mr-3">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                                    </svg>
+                                    {availableEquipment.map(eq => {
+                                        const pending = getPendingCount(eq.resourceMasterId);
+                                        const isDraggable = pending > 0;
+
+                                        return (
+                                            <div
+                                                key={eq.id}
+                                                draggable={isDraggable}
+                                                onDragStart={(e) => isDraggable && handleDragStart(e, eq.id, 'equipment')}
+                                                className={`bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group transition-all ${isDraggable ? 'cursor-move hover:shadow-md' : 'opacity-60 cursor-not-allowed bg-gray-50'}`}
+                                            >
+                                                <div className="flex items-center">
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${isDraggable ? 'bg-amber-100 text-amber-600' : 'bg-gray-200 text-gray-500'}`}>
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{eq.name}</p>
+                                                        <p className="text-xs text-gray-500">{eq.type}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium text-gray-900">{eq.name}</p>
-                                                    <p className="text-xs text-gray-500">{eq.type}</p>
+                                                <div className="flex items-center">
+                                                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${isDraggable ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                                                        {pending} Pending
+                                                    </span>
+                                                    {isDraggable && (
+                                                        <div className="opacity-0 group-hover:opacity-100 text-gray-400 ml-2">
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <div className="opacity-0 group-hover:opacity-100 text-gray-400">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
 
                                     {availableEmployees.length === 0 && availableEquipment.length === 0 && (
                                         <div className="text-center py-8 text-gray-500">

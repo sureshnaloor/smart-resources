@@ -113,6 +113,9 @@ export async function DELETE(
                 $set: {
                     isDeleted: true,
                     updatedAt: new Date()
+                },
+                $unset: {
+                    resourceMasterId: "" // Unset resourceMasterId on soft delete
                 }
             },
             { returnDocument: 'after' }

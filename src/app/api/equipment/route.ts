@@ -70,9 +70,13 @@ export async function POST(request: NextRequest) {
         const id = `EQ${String(count + 1).padStart(3, '0')}`;
 
         const newEquipment: Partial<Equipment> = {
-            ...body,
+            ...body, // Keep existing body properties
             id,
-            type: 'equipment',
+            type: 'equipment', // Keep existing type
+            value: body.value || 0,
+            costPerHour: body.costPerHour || 0,
+            depreciationRate: body.depreciationRate || 0,
+            resourceMasterId: body.resourceMasterId,
             createdAt: new Date(),
             updatedAt: new Date(),
             isDeleted: false,

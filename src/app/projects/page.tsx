@@ -7,7 +7,7 @@ import ProjectModal from '@/components/ProjectModal';
 import BulkUploadModal from '@/components/BulkUploadModal';
 import ResourceRequirementModal from '@/components/ResourceRequirementModal';
 import { projectsApi } from '@/lib/api-client';
-import type { Project, ResourceMaster } from '@/lib/models';
+import type { Project, ResourceMaster, Assignment, Employee, Equipment } from '@/lib/models';
 
 export default function ProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -18,66 +18,91 @@ export default function ProjectsPage() {
     const [projectMode, setProjectMode] = useState<'add' | 'edit'>('add');
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [resourceMasters, setResourceMasters] = useState<ResourceMaster[]>([]);
+    const [assignments, setAssignments] = useState<Assignment[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchProjects();
-        fetchResourceMasters();
+        fetchInitialData();
     }, []);
 
-    const fetchResourceMasters = async () => {
+    useEffect(() => {
+        if (selectedProjectId) {
+            fetchProjectAssignments(selectedProjectId);
+        } else {
+            setAssignments([]);
+        }
+    }, [selectedProjectId]);
+
+    const fetchInitialData = async () => {
+        setLoading(true);
+        setError(null);
         try {
-            const response = await fetch('/api/resource-masters');
+            const [projectsRes, mastersRes, employeesRes, equipmentRes] = await Promise.all([
+                projectsApi.getAll(),
+                fetch('/api/resource-masters').then(res => res.json()),
+                fetch('/api/employees').then(res => res.json()),
+                fetch('/api/equipment').then(res => res.json())
+            ]);
+
+            if (projectsRes.success) setProjects(projectsRes.data as Project[]);
+            if (mastersRes.success) setResourceMasters(mastersRes.data);
+            if (employeesRes.success) setEmployees(employeesRes.data);
+            if (equipmentRes.success) setEquipment(equipmentRes.data);
+
+            // Trigger animations
+            import('animejs').then((animeModule) => {
+                const anime = animeModule.default;
+                setTimeout(() => {
+                    anime({
+                        targets: '.fade-in-up',
+                        translateY: [30, 0],
+                        opacity: [0, 1],
+                        delay: anime.stagger(100),
+                        duration: 600,
+                        easing: 'easeOutQuart'
+                    });
+                    anime({
+                        targets: '.project-card',
+                        scale: [0.9, 1],
+                        opacity: [0, 1],
+                        delay: anime.stagger(50, { start: 300 }),
+                        duration: 400,
+                        easing: 'easeOutQuart'
+                    });
+                }, 100);
+            });
+
+        } catch (err) {
+            setError('Failed to load data. Please try again.');
+            console.error('Error fetching data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchProjectAssignments = async (projectId: string) => {
+        try {
+            const response = await fetch(`/api/assignments?projectId=${projectId}`);
             const result = await response.json();
             if (result.success) {
-                setResourceMasters(result.data);
+                setAssignments(result.data);
             }
         } catch (error) {
-            console.error('Failed to fetch resource masters:', error);
+            console.error('Failed to fetch assignments:', error);
         }
     };
 
     const fetchProjects = async () => {
-        setLoading(true);
-        setError(null);
-
         try {
             const response = await projectsApi.getAll();
-
             if (response.success && response.data) {
                 setProjects(response.data as Project[]);
-
-                // Trigger animations after data is loaded
-                import('animejs').then((animeModule) => {
-                    const anime = animeModule.default;
-
-                    setTimeout(() => {
-                        anime({
-                            targets: '.fade-in-up',
-                            translateY: [30, 0],
-                            opacity: [0, 1],
-                            delay: anime.stagger(100),
-                            duration: 600,
-                            easing: 'easeOutQuart'
-                        });
-
-                        anime({
-                            targets: '.project-card',
-                            scale: [0.9, 1],
-                            opacity: [0, 1],
-                            delay: anime.stagger(50, { start: 300 }),
-                            duration: 400,
-                            easing: 'easeOutQuart'
-                        });
-                    }, 100);
-                });
             }
         } catch (err) {
-            setError('Failed to load projects. Please try again.');
             console.error('Error fetching projects:', err);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -142,8 +167,6 @@ export default function ProjectsPage() {
 
     const [viewMode, setViewMode] = useState<'active' | 'completed' | 'on-hold'>('active');
 
-    // ... (existing code)
-
     const statusOrder: Record<string, number> = { 'planning': 1, 'active': 2, 'completed': 3, 'on-hold': 4 };
 
     const filteredProjects = projects.filter(p => {
@@ -167,11 +190,17 @@ export default function ProjectsPage() {
         }
     };
 
-    const skillGaps = [
-        { skill: 'Advanced Welding', gap: 3, priority: 'high' },
-        { skill: 'Heavy Machinery Ops', gap: 1, priority: 'medium' },
-        { skill: 'Electrical Systems', gap: 2, priority: 'low' }
-    ];
+    // Calculate assigned counts by resource master ID
+    const assignedCounts = new Map<string, number>();
+    assignments.forEach(a => {
+        const resource = a.resourceType === 'employee'
+            ? employees.find(e => e.id === a.resourceId)
+            : equipment.find(e => e.id === a.resourceId);
+
+        if (resource?.resourceMasterId) {
+            assignedCounts.set(resource.resourceMasterId, (assignedCounts.get(resource.resourceMasterId) || 0) + 1);
+        }
+    });
 
     return (
         <>
@@ -194,7 +223,7 @@ export default function ProjectsPage() {
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                         <p className="text-red-800">{error}</p>
                         <button
-                            onClick={fetchProjects}
+                            onClick={fetchInitialData}
                             className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                         >
                             Retry
@@ -424,7 +453,7 @@ export default function ProjectsPage() {
                                                     {selectedProjectData.resourceRequirements?.length > 0 ? (
                                                         selectedProjectData.resourceRequirements.map((req, idx) => {
                                                             const master = resourceMasters.find(m => m.resourceId === req.resourceMasterId);
-                                                            const assignedCount = 0; // TODO: Implement assignment logic
+                                                            const assignedCount = assignedCounts.get(req.resourceMasterId) || 0;
                                                             const gap = req.quantity - assignedCount;
 
                                                             if (gap <= 0) return null;
@@ -442,9 +471,12 @@ export default function ProjectsPage() {
                                                     ) : (
                                                         <p className="text-sm text-gray-500">No resource gaps identified.</p>
                                                     )}
-                                                    {selectedProjectData.resourceRequirements?.every(req => req.quantity <= 0) && (
-                                                        <p className="text-sm text-gray-500">No resource gaps identified.</p>
-                                                    )}
+                                                    {selectedProjectData.resourceRequirements?.every(req => {
+                                                        const assigned = assignedCounts.get(req.resourceMasterId) || 0;
+                                                        return req.quantity - assigned <= 0;
+                                                    }) && (
+                                                            <p className="text-sm text-gray-500">All requirements fulfilled.</p>
+                                                        )}
                                                 </div>
                                             </div>
 
@@ -472,7 +504,41 @@ export default function ProjectsPage() {
 
                                             <div className="glass-card rounded-lg p-6">
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Resources Assigned</h3>
-                                                <p className="text-sm text-gray-500 italic">No resources currently assigned.</p>
+                                                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                                                    {assignments.length > 0 ? (
+                                                        assignments.map((assignment) => {
+                                                            const resource = assignment.resourceType === 'employee'
+                                                                ? employees.find(e => e.id === assignment.resourceId)
+                                                                : equipment.find(e => e.id === assignment.resourceId);
+
+                                                            if (!resource) return null;
+
+                                                            return (
+                                                                <div key={assignment._id?.toString()} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
+                                                                    <div className="flex items-center">
+                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${assignment.resourceType === 'employee' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                                            {assignment.resourceType === 'employee' ? (
+                                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                                                </svg>
+                                                                            ) : (
+                                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                                                </svg>
+                                                                            )}
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="font-medium text-gray-900 text-sm">{resource.name}</p>
+                                                                            <p className="text-xs text-gray-500 capitalize">{assignment.resourceType}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500 italic">No resources currently assigned.</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </>
                                     )

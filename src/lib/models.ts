@@ -31,6 +31,7 @@ export interface Employee extends BaseDocument {
     wage: number; // Annual salary or hourly wage
     costPerHour: number; // Actual cost per hour to company
     isIndirect: boolean; // True for supervisory/management staff
+    resourceMasterId?: string; // Link to Resource Master
 }
 
 // Equipment Model
@@ -51,6 +52,7 @@ export interface Equipment extends BaseDocument {
     value: number; // Purchase/current value
     costPerHour: number; // Operating cost per hour
     depreciationRate: number; // Annual depreciation percentage
+    resourceMasterId?: string; // Link to Resource Master
 }
 
 // Resource Group Model (for consolidated resources)

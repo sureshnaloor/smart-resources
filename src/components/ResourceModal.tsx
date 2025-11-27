@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Employee, Equipment } from '@/lib/models';
+import type { Employee, Equipment, ResourceMaster } from '@/lib/models';
 
 interface ResourceModalProps {
     isOpen: boolean;
@@ -16,6 +16,7 @@ interface ResourceModalProps {
 const getDefaultFormData = (type: 'employee' | 'equipment') => {
     if (type === 'employee') {
         return {
+            resourceMasterId: '',
             name: '',
             employeeNumber: '',
             governmentId: '',
@@ -33,6 +34,7 @@ const getDefaultFormData = (type: 'employee' | 'equipment') => {
         };
     } else {
         return {
+            resourceMasterId: '',
             name: '',
             make: '',
             model: '',
@@ -65,6 +67,7 @@ export default function ResourceModal({
         }
         return getDefaultFormData(resourceType);
     });
+    const [resourceMasters, setResourceMasters] = useState<ResourceMaster[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +75,7 @@ export default function ResourceModal({
     useEffect(() => {
         console.log('ResourceModal useEffect:', { isOpen, mode, resourceType, resource });
         if (isOpen) {
+            fetchResourceMasters();
             if (mode === 'edit' && resource) {
                 console.log('Setting formData to resource:', resource);
                 setFormData(resource);
@@ -84,6 +88,18 @@ export default function ResourceModal({
             setError(null);
         }
     }, [isOpen, mode, resource, resourceType]);
+
+    const fetchResourceMasters = async () => {
+        try {
+            const response = await fetch('/api/resource-masters');
+            const result = await response.json();
+            if (result.success) {
+                setResourceMasters(result.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch resource masters:', error);
+        }
+    };
 
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -201,6 +217,26 @@ export default function ResourceModal({
                                 <div>
                                     <h4 className="text-sm font-semibold text-slate-900 mb-3">Basic Information</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Resource Type *</label>
+                                            <select
+                                                name="resourceMasterId"
+                                                value={formData.resourceMasterId || ''}
+                                                onChange={handleInputChange}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                required
+                                            >
+                                                <option value="">Select Type</option>
+                                                {resourceMasters
+                                                    .filter(m => m.resourceType === 'manpower')
+                                                    .map(m => (
+                                                        <option key={m.resourceId} value={m.resourceId}>
+                                                            {m.resourceName}
+                                                        </option>
+                                                    ))
+                                                }
+                                            </select>
+                                        </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-2">Full Name *</label>
                                             <input
@@ -409,6 +445,26 @@ export default function ResourceModal({
                                 <div>
                                     <h4 className="text-sm font-semibold text-slate-900 mb-3">Basic Information</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Resource Type *</label>
+                                            <select
+                                                name="resourceMasterId"
+                                                value={formData.resourceMasterId || ''}
+                                                onChange={handleInputChange}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                                required
+                                            >
+                                                <option value="">Select Type</option>
+                                                {resourceMasters
+                                                    .filter(m => m.resourceType === 'equipment')
+                                                    .map(m => (
+                                                        <option key={m.resourceId} value={m.resourceId}>
+                                                            {m.resourceName}
+                                                        </option>
+                                                    ))
+                                                }
+                                            </select>
+                                        </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-2">Equipment Name *</label>
                                             <input

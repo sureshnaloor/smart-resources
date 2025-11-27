@@ -5,14 +5,16 @@ import Navigation from '@/components/Navigation';
 import BusinessCenterModal from '@/components/BusinessCenterModal';
 import ResourceModal from '@/components/ResourceModal';
 import BulkUploadModal from '@/components/BulkUploadModal';
-import { employeesApi, equipmentApi, businessCentersApi } from '@/lib/api-client';
-import type { Employee, Equipment, BusinessCenter } from '@/lib/models';
+import UtilizationModal from '@/components/UtilizationModal';
+import { employeesApi, equipmentApi, businessCentersApi, projectsApi } from '@/lib/api-client';
+import type { Employee, Equipment, BusinessCenter, Project, Assignment } from '@/lib/models';
 
 export default function ResourcesPage() {
     const [currentTab, setCurrentTab] = useState<'employees' | 'equipment' | 'centers'>('employees');
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [businessCenters, setBusinessCenters] = useState<BusinessCenter[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [showBulkModal, setShowBulkModal] = useState(false);
@@ -21,6 +23,11 @@ export default function ResourcesPage() {
     const [selectedResource, setSelectedResource] = useState<Employee | Equipment | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Utilization Modal State
+    const [showUtilizationModal, setShowUtilizationModal] = useState(false);
+    const [resourceAssignments, setResourceAssignments] = useState<Assignment[]>([]);
+    const [utilizationResource, setUtilizationResource] = useState<Employee | Equipment | null>(null);
 
     // Business Center Modal State
     const [showBusinessCenterModal, setShowBusinessCenterModal] = useState(false);
@@ -38,10 +45,11 @@ export default function ResourcesPage() {
         setError(null);
 
         try {
-            const [employeesRes, equipmentRes, centersRes] = await Promise.all([
+            const [employeesRes, equipmentRes, centersRes, projectsRes] = await Promise.all([
                 employeesApi.getAll(),
                 equipmentApi.getAll(),
                 businessCentersApi.getAll(),
+                projectsApi.getAll(),
             ]);
 
             if (employeesRes.success && employeesRes.data) {
@@ -52,6 +60,9 @@ export default function ResourcesPage() {
             }
             if (centersRes.success && centersRes.data) {
                 setBusinessCenters(centersRes.data as BusinessCenter[]);
+            }
+            if (projectsRes.success && projectsRes.data) {
+                setProjects(projectsRes.data as Project[]);
             }
 
             // Trigger animations after data is loaded
@@ -275,6 +286,23 @@ export default function ResourcesPage() {
         }
     };
 
+    const handleViewUtilization = async (resource: Employee | Equipment) => {
+        setUtilizationResource(resource);
+        setResourceAssignments([]); // Clear previous assignments
+        setShowUtilizationModal(true);
+
+        try {
+            const response = await fetch(`/api/assignments?resourceId=${resource.id}`);
+            const result = await response.json();
+            if (result.success) {
+                setResourceAssignments(result.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch assignments:', error);
+            showNotification('error', 'Failed to load utilization data');
+        }
+    };
+
     const filteredEmployees = filterResources(employees);
     const filteredEquipment = filterResources(equipment);
     const filteredCenters = filterResources(businessCenters);
@@ -450,7 +478,7 @@ export default function ResourcesPage() {
                                 {currentTab === 'employees' && (
                                     <div className="resource-grid">
                                         {filteredEmployees.map((employee) => (
-                                            <div key={employee.id} className="resource-card bg-white rounded-lg p-6 border border-gray-200">
+                                            <div key={employee.id} className="resource-card bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleViewUtilization(employee)}>
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-start space-x-4 flex-1">
                                                         <div className={`w-12 h-12 ${employee.avatar.color} rounded-full flex items-center justify-center text-white font-medium`}>
@@ -468,7 +496,7 @@ export default function ResourcesPage() {
                                                     </div>
                                                     <div className="flex space-x-2 ml-4">
                                                         <button
-                                                            onClick={() => handleEditEmployee(employee)}
+                                                            onClick={(e) => { e.stopPropagation(); handleEditEmployee(employee); }}
                                                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                             title="Edit"
                                                         >
@@ -477,7 +505,7 @@ export default function ResourcesPage() {
                                                             </svg>
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDeleteEmployee(employee.id)}
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteEmployee(employee.id); }}
                                                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                             title="Delete"
                                                         >
@@ -499,6 +527,7 @@ export default function ResourcesPage() {
 
                                                 <div className="mt-4 flex items-center justify-between text-sm">
                                                     <span className="text-gray-600">{employee.location}</span>
+                                                    <span className="text-blue-600 hover:underline text-xs" onClick={(e) => { e.stopPropagation(); handleViewUtilization(employee); }}>View Utilization</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -509,7 +538,7 @@ export default function ResourcesPage() {
                                 {currentTab === 'equipment' && (
                                     <div className="resource-grid">
                                         {filteredEquipment.map((eq) => (
-                                            <div key={eq.id} className="resource-card bg-white rounded-lg p-6 border border-gray-200">
+                                            <div key={eq.id} className="resource-card bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleViewUtilization(eq)}>
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-start space-x-4 flex-1">
                                                         <div className="w-12 h-12 bg-gray-400 rounded-lg flex items-center justify-center">
@@ -529,7 +558,7 @@ export default function ResourcesPage() {
                                                     </div>
                                                     <div className="flex space-x-2 ml-4">
                                                         <button
-                                                            onClick={() => handleEditEquipment(eq)}
+                                                            onClick={(e) => { e.stopPropagation(); handleEditEquipment(eq); }}
                                                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                             title="Edit"
                                                         >
@@ -538,7 +567,7 @@ export default function ResourcesPage() {
                                                             </svg>
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDeleteEquipment(eq.id)}
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteEquipment(eq.id); }}
                                                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                             title="Delete"
                                                         >
@@ -550,19 +579,18 @@ export default function ResourcesPage() {
                                                 </div>
 
                                                 <div className="mt-4">
-                                                    <div className="flex items-center justify-between text-sm">
+                                                    <div className="flex items-center justify-between text-sm mb-2">
                                                         <span className="text-gray-600">Location: {eq.location}</span>
                                                         <span className="text-gray-600">Utilization: {eq.utilization}%</span>
                                                     </div>
-                                                    <div className="mt-2">
-                                                        <div className="w-full bg-gray-200 rounded-full h-2">
-                                                            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${eq.utilization}%` }}></div>
-                                                        </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${eq.utilization}%` }}></div>
                                                     </div>
                                                 </div>
 
-                                                <div className="mt-4 text-sm text-gray-600">
-                                                    Next Maintenance: {new Date(eq.nextMaintenance).toLocaleDateString()}
+                                                <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                                                    <span>Next Maintenance: {new Date(eq.nextMaintenance).toLocaleDateString()}</span>
+                                                    <span className="text-blue-600 hover:underline text-xs" onClick={(e) => { e.stopPropagation(); handleViewUtilization(eq); }}>View Utilization</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -654,6 +682,15 @@ export default function ResourcesPage() {
                         onSave={handleSaveBusinessCenter}
                         businessCenter={selectedBusinessCenter}
                         mode={businessCenterMode}
+                    />
+
+                    {/* Utilization Modal */}
+                    <UtilizationModal
+                        isOpen={showUtilizationModal}
+                        onClose={() => setShowUtilizationModal(false)}
+                        resource={utilizationResource}
+                        assignments={resourceAssignments}
+                        projects={projects}
                     />
 
                     {/* Delete Confirmation Dialog */}
