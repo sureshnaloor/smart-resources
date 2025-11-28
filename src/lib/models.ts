@@ -117,6 +117,11 @@ export interface Assignment extends BaseDocument {
     startDate: Date;
     endDate: Date;
     status: 'active' | 'completed';
+    schedule?: {
+        startDate: Date;
+        endDate: Date;
+        status: 'active' | 'completed' | 'cancelled';
+    }[];
 }
 
 // API Response types

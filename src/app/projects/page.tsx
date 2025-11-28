@@ -449,7 +449,7 @@ export default function ProjectsPage() {
                                         <>
                                             <div className="glass-card rounded-lg p-6 mb-6">
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Gap Analysis</h3>
-                                                <div className="space-y-3">
+                                                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                                                     {selectedProjectData.resourceRequirements?.length > 0 ? (
                                                         selectedProjectData.resourceRequirements.map((req, idx) => {
                                                             const master = resourceMasters.find(m => m.resourceId === req.resourceMasterId);
@@ -482,7 +482,7 @@ export default function ProjectsPage() {
 
                                             <div className="glass-card rounded-lg p-6 mb-6">
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Resource Requirements</h3>
-                                                <div className="space-y-3">
+                                                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                                                     {selectedProjectData.resourceRequirements?.length > 0 ? (
                                                         selectedProjectData.resourceRequirements.map((req, idx) => {
                                                             const master = resourceMasters.find(m => m.resourceId === req.resourceMasterId);
