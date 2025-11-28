@@ -6,6 +6,7 @@ import LiquidBackground from '@/components/LiquidBackground';
 import ProjectModal from '@/components/ProjectModal';
 import BulkUploadModal from '@/components/BulkUploadModal';
 import ResourceRequirementModal from '@/components/ResourceRequirementModal';
+import ProjectAnalysis from '@/components/ProjectAnalysis';
 import { projectsApi } from '@/lib/api-client';
 import type { Project, ResourceMaster, Assignment, Employee, Equipment } from '@/lib/models';
 
@@ -423,13 +424,6 @@ export default function ProjectsPage() {
                                     </div>
                                 </div>
 
-                                {/* Gantt Chart Placeholder */}
-                                <div className="glass-card rounded-lg p-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-6">Project Timeline</h3>
-                                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                                        <p className="text-sm text-gray-500 text-center py-8">Gantt Chart Visualization</p>
-                                    </div>
-                                </div>
                             </div>
 
                             {/* Resource Planning */}
@@ -447,6 +441,13 @@ export default function ProjectsPage() {
                                         </div>
                                     ) : (
                                         <>
+                                            <ProjectAnalysis
+                                                project={selectedProjectData}
+                                                assignments={assignments}
+                                                employees={employees}
+                                                equipment={equipment}
+                                            />
+
                                             <div className="glass-card rounded-lg p-6 mb-6">
                                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Gap Analysis</h3>
                                                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">

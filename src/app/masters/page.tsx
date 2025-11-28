@@ -1,34 +1,43 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ResourceMaster } from '@/lib/models';
+import { ResourceMaster, Employee, Equipment } from '@/lib/models';
 import ResourceMasterModal from '@/components/ResourceMasterModal';
+import MasterResourceList from '@/components/MasterResourceList';
 import Navigation from '@/components/Navigation';
 import LiquidBackground from '@/components/LiquidBackground';
+import { employeesApi, equipmentApi } from '@/lib/api-client';
 
 export default function ResourceMastersPage() {
     const [masters, setMasters] = useState<ResourceMaster[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMaster, setSelectedMaster] = useState<ResourceMaster | undefined>(undefined);
+    const [viewMasterId, setViewMasterId] = useState<string | null>(null);
     const [filterType, setFilterType] = useState<'all' | 'manpower' | 'equipment'>('all');
 
-    const fetchMasters = async () => {
+    const fetchData = async () => {
         try {
-            const response = await fetch('/api/resource-masters');
-            const result = await response.json();
-            if (result.success) {
-                setMasters(result.data);
-            }
+            const [mastersRes, employeesRes, equipmentRes] = await Promise.all([
+                fetch('/api/resource-masters').then(res => res.json()),
+                employeesApi.getAll(),
+                equipmentApi.getAll()
+            ]);
+
+            if (mastersRes.success) setMasters(mastersRes.data);
+            if (employeesRes.success) setEmployees(employeesRes.data as Employee[]);
+            if (equipmentRes.success) setEquipment(equipmentRes.data as Equipment[]);
         } catch (error) {
-            console.error('Failed to fetch resource masters:', error);
+            console.error('Failed to fetch data:', error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchMasters();
+        fetchData();
     }, []);
 
     const handleEdit = (master: ResourceMaster) => {
@@ -45,7 +54,8 @@ export default function ResourceMastersPage() {
             });
             const result = await response.json();
             if (result.success) {
-                fetchMasters();
+                fetchData();
+                if (viewMasterId === id) setViewMasterId(null);
             }
         } catch (error) {
             console.error('Failed to delete resource master:', error);
@@ -55,6 +65,13 @@ export default function ResourceMastersPage() {
     const filteredMasters = masters.filter(
         (m) => filterType === 'all' || m.resourceType === filterType
     );
+
+    const viewMaster = masters.find(m => m.resourceId === viewMasterId);
+    const relatedResources = viewMaster
+        ? (viewMaster.resourceType === 'manpower'
+            ? employees.filter(e => e.resourceMasterId === viewMaster.resourceId)
+            : equipment.filter(e => e.resourceMasterId === viewMaster.resourceId))
+        : [];
 
     return (
         <>
@@ -137,15 +154,23 @@ export default function ResourceMastersPage() {
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {filteredMasters.map((master) => (
-                                            <tr key={master.resourceId} className="hover:bg-slate-50/50 transition-colors">
+                                            <tr
+                                                key={master.resourceId}
+                                                className={`transition-colors ${viewMasterId === master.resourceId ? 'bg-blue-50' : 'hover:bg-slate-50/50'}`}
+                                            >
                                                 <td className="px-6 py-4 font-medium text-slate-900">
-                                                    {master.resourceName}
+                                                    <button
+                                                        onClick={() => setViewMasterId(viewMasterId === master.resourceId ? null : master.resourceId)}
+                                                        className="text-blue-600 hover:text-blue-800 hover:underline text-left"
+                                                    >
+                                                        {master.resourceName}
+                                                    </button>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span
                                                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${master.resourceType === 'manpower'
-                                                            ? 'bg-blue-50 text-blue-700'
-                                                            : 'bg-amber-50 text-amber-700'
+                                                            ? 'bg-blue-100 text-blue-700'
+                                                            : 'bg-amber-100 text-amber-700'
                                                             }`}
                                                     >
                                                         {master.resourceType.charAt(0).toUpperCase() +
@@ -176,12 +201,21 @@ export default function ResourceMastersPage() {
                             </div>
                         )}
                     </div>
+
+                    {/* Detail View */}
+                    {viewMaster && (
+                        <MasterResourceList
+                            master={viewMaster}
+                            resources={relatedResources}
+                            onClose={() => setViewMasterId(null)}
+                        />
+                    )}
                 </div>
 
                 <ResourceMasterModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    onSave={fetchMasters}
+                    onSave={fetchData}
                     master={selectedMaster}
                 />
             </div>

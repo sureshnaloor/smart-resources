@@ -1,6 +1,7 @@
 import React from 'react';
 import { Assignment, Project, Employee, Equipment } from '@/lib/models';
 import CalendarPicker from './CalendarPicker';
+import ResourceCalendar from './ResourceCalendar';
 
 interface UtilizationModalProps {
     isOpen: boolean;
@@ -232,6 +233,8 @@ export default function UtilizationModal({ isOpen, onClose, resource, assignment
                                     <p className="text-sm text-gray-500 mb-4">
                                         Assignment history and current utilization.
                                     </p>
+
+                                    <ResourceCalendar assignments={assignments} projects={projects} />
 
                                     {sortedAssignments.length > 0 ? (
                                         <div className="flow-root mt-6">
